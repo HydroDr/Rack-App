@@ -22,7 +22,15 @@ export interface SelectionToolDeps {
   readonly boundsOf: (instance: RackInstance) => Bounds;
 }
 
-/** Click selection: hits the topmost (last-inserted-order) instance under the point, if any. */
+/**
+ * Click selection: hits the topmost (last-inserted-order) instance under the point, if any.
+ *
+ * TODO(perf): this is a sequential O(n) scan over every Rack Instance in the
+ * Layout. Fine at current warehouse scale; if large layouts (thousands of
+ * instances) make click-selection feel slow, this is the place to add a
+ * spatial index (e.g. an R-tree or grid-bucket structure keyed by bounds)
+ * instead of rewriting the tool itself.
+ */
 export function selectAtPoint(deps: SelectionToolDeps, point: ZoneBoundaryPoint, additive = false): void {
   const state = deps.layoutStore.getState();
   const hit = Array.from(state.rackInstances.values()).find((instance) => pointInBounds(point, deps.boundsOf(instance)));
