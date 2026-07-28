@@ -1,15 +1,14 @@
 /**
- * Re-exports the @rack-app/data entity types and generic identity/
- * timestamp utilities that downstream packages (canvas, later ui)
- * legitimately need for rendering and interaction, without those packages
- * importing @rack-app/data's repository/persistence machinery directly.
- * This is state's data-layer facade: canvas may depend on state for
- * these (Engineering File Plan §1.2 — canvas depends on state,
- * rules-engine only), never on data's storage layer directly.
+ * Re-exports the @rack-app/data entity types, model factory/validation
+ * functions, and generic identity/timestamp utilities that downstream
+ * packages (canvas, ui) legitimately need, without those packages
+ * importing @rack-app/data's repository/persistence machinery directly
+ * (that lives in storageFacade.ts). This is state's data-layer facade:
+ * canvas and ui may depend on state for these (Engineering File Plan
+ * §1.2), never on data's storage layer directly.
  *
  * generateId/nowIsoTimestamp/CURRENT_SCHEMA_VERSION are re-exported as
- * values (not just types) because every canvas mutation tool
- * (placementTool, arrayRepeatTool, mirrorTool, pathLaneTool) needs to
+ * values because every mutation site (canvas tools, ui forms) needs to
  * stamp a fresh id/timestamp on the entities it creates — these are
  * generic identity utilities, not persistence logic.
  */
@@ -17,21 +16,93 @@ export type {
   BlockStackZone,
   ComponentColorMap,
   ComponentType,
+  CreateBlockStackZoneInput,
+  CreateFeedbackInput,
+  CreateGroupLayerInput,
+  CreateLayoutInput,
+  CreateNoteAttachmentInput,
+  CreatePalletProfileInput,
+  CreatePathLaneInput,
+  CreateProjectInput,
+  CreateProtectorTemplateInput,
+  CreateRackInstanceInput,
+  CreateRackTemplateInput,
+  CreateRoiScenarioInput,
+  CreateShareLinkInput,
+  CreateVariantInput,
+  CreateWarehouseElementInput,
+  CreateZoneInput,
   EntityId,
+  Feedback,
+  FeedbackType,
   GroupLayer,
+  Layout,
+  NoteAttachment,
+  NoteScope,
+  NoteType,
+  PalletProfile,
   PathLane,
   PathLaneType,
   PathPoint,
-  PalletProfile,
+  Project,
   ProtectorKind,
   ProtectorTemplate,
   RackInstance,
   RackTemplate,
+  RoiMode,
+  RoiModeAAssumptions,
+  RoiModeBAssumptions,
+  RoiScenario,
+  RoiScenarioModeA,
+  RoiScenarioModeB,
+  SessionId,
+  ShareLink,
   Template,
   Variant,
   WarehouseElement,
+  WarehouseElementType,
   Zone,
   ZoneBoundaryPoint,
 } from "@rack-app/data";
 
-export { CURRENT_SCHEMA_VERSION, generateId, nowIsoTimestamp } from "@rack-app/data";
+export {
+  CURRENT_SCHEMA_VERSION,
+  DEFAULT_SHARE_LINK_DURATION_DAYS,
+  createBlockStackZone,
+  createFeedback,
+  createGroupLayer,
+  createLayout,
+  createNoteAttachment,
+  createPalletProfile,
+  createPathLane,
+  createProject,
+  createProtectorTemplate,
+  createRackInstance,
+  createRackTemplate,
+  createRoiScenario,
+  createShareLink,
+  createVariant,
+  createWarehouseElement,
+  createZone,
+  generateFeedbackSessionId,
+  generateId,
+  getVariantDisplayName,
+  isShareLinkAccessible,
+  nowIsoTimestamp,
+  recordShareLinkView,
+  revokeShareLink,
+  validateFeedback,
+  validateGroupLayer,
+  validateLayout,
+  validateNoteAttachment,
+  validatePalletProfile,
+  validatePathLane,
+  validateProject,
+  validateRackInstance,
+  validateRoiScenario,
+  validateShareLink,
+  validateTemplate,
+  validateVariant,
+  validateWarehouseElement,
+  validateZone,
+} from "@rack-app/data";
