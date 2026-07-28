@@ -4,6 +4,7 @@
  * ESLint boundaries rule).
  */
 
+export * from "./entityTypes.js";
 export * from "./projectStore.js";
 export * from "./uiPreferencesStore.js";
 export * from "./layoutStore.js";
