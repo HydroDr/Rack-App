@@ -20,6 +20,7 @@ export type {
   EntityId,
   GroupLayer,
   PathLane,
+  PathLaneType,
   PathPoint,
   PalletProfile,
   ProtectorKind,
