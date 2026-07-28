@@ -241,4 +241,21 @@ describe("feedback.ts — Spec §6.3b: anonymous submissions need a generated se
     if (result.kind !== "error") throw new Error("unreachable");
     expect(result.code).toBe("FEEDBACK_COMMENT_MISSING_POSITION");
   });
+
+  it("accepts a well-formed generalNote with non-empty text", () => {
+    const now = nowIsoTimestamp();
+    const feedback: Feedback = {
+      id: generateId(),
+      layoutId: generateId(),
+      shareLinkId: generateId(),
+      sessionId: generateFeedbackSessionId(),
+      feedbackType: "generalNote",
+      text: "Overall this looks great, thanks!",
+      createdAt: now,
+      updatedAt: now,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+    };
+    const result = validateFeedback(feedback);
+    expect(result.kind).toBe("ok");
+  });
 });
