@@ -23,13 +23,17 @@ import {
   ShareLinkRepository,
   TemplateRepository,
   type BlockStackZone,
+  type Feedback,
   type GroupLayer,
   type HistoryStore,
   type LayoutStore,
+  type NoteAttachment,
+  type PalletProfile,
   type PathLane,
   type ProjectStore,
   type RackInstance,
   type Repository,
+  type RoiScenario,
   type ShareLink,
   type Template,
   type UiPreferencesStore,
@@ -49,6 +53,10 @@ export interface AppRepositories {
   readonly groupLayers: Repository<GroupLayer>;
   readonly zones: Repository<Zone>;
   readonly blockStackZones: Repository<BlockStackZone>;
+  readonly palletProfiles: Repository<PalletProfile>;
+  readonly roiScenarios: Repository<RoiScenario>;
+  readonly notes: Repository<NoteAttachment>;
+  readonly feedback: Repository<Feedback>;
 }
 
 export interface AppStores {
@@ -79,6 +87,10 @@ function createAppStores(databaseName: string): AppStores {
     groupLayers: createIndexedDbRepository<GroupLayer>(db.groupLayers as never),
     zones: createIndexedDbRepository<Zone>(db.zones as never),
     blockStackZones: createIndexedDbRepository<BlockStackZone>(db.blockStackZones as never),
+    palletProfiles: createIndexedDbRepository<PalletProfile>(db.palletProfiles as never),
+    roiScenarios: createIndexedDbRepository<RoiScenario>(db.roiScenarios as never),
+    notes: createIndexedDbRepository<NoteAttachment>(db.noteAttachments as never),
+    feedback: createIndexedDbRepository<Feedback>(db.feedback as never),
   };
 
   const projectStore = createProjectStore();
