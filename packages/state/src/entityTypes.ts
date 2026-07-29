@@ -45,6 +45,8 @@ export type {
   PathLaneType,
   PathPoint,
   Project,
+  ProjectUnitsOverride,
+  ProjectWallType,
   ProtectorKind,
   ProtectorTemplate,
   RackInstance,

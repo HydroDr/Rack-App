@@ -9,12 +9,21 @@ import { error, ok, type Result } from "@rack-app/rules-engine";
 import { generateId, isEntityId, type EntityId } from "../integrity.js";
 import { CURRENT_SCHEMA_VERSION, nowIsoTimestamp, type IsoTimestamp, type Versioned } from "../migrations/schemaVersion.js";
 
+/** Mirrors state/uiPreferencesStore.ts's UnitsPreference — duplicated here rather than imported, since data has zero package dependencies besides rules-engine (Engineering File Plan §1.2). */
+export type ProjectUnitsOverride = "inches" | "feetInches" | "metric";
+export type ProjectWallType = "food" | "nonFood";
+
 export interface Project extends Versioned {
   readonly id: EntityId;
   readonly name: string;
   readonly clientName: string;
   /** Populated by renderer/thumbnailRenderer.ts once the canvas package exists; absent for a brand-new project. */
   readonly thumbnailDataUrl?: string;
+  /** Project Settings (Spec §6.5) — all optional/undefined until the designer sets them; falls through to account-wide defaults until then. */
+  readonly wallType?: ProjectWallType;
+  readonly unitsOverride?: ProjectUnitsOverride;
+  /** Multi-select pallet-profile filter for the Template Panel; empty/absent = no filter. */
+  readonly activePalletProfileIds?: readonly EntityId[];
   readonly createdAt: IsoTimestamp;
   readonly updatedAt: IsoTimestamp;
 }
