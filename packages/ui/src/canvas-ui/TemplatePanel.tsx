@@ -17,11 +17,13 @@ export interface TemplatePanelProps {
   /** Empty set = no filter (show everything) — Spec §6.5's pallet size/weight filter is multi-select. */
   readonly activePalletProfileIds: ReadonlySet<EntityId>;
   readonly onSelectTemplate: (templateId: EntityId, variantId?: EntityId) => void;
+  /** Routes to the Template Editor pre-filled with this template (Spec §6.4.1, Phase 7). */
+  readonly onEditTemplate: (templateId: EntityId) => void;
 }
 
 type PanelMode = "quick" | "normal";
 
-export function TemplatePanel({ templates, variants, activePalletProfileIds, onSelectTemplate }: TemplatePanelProps) {
+export function TemplatePanel({ templates, variants, activePalletProfileIds, onSelectTemplate, onEditTemplate }: TemplatePanelProps) {
   const [mode, setMode] = useState<PanelMode>("quick");
 
   const visibleTemplates =
@@ -52,18 +54,28 @@ export function TemplatePanel({ templates, variants, activePalletProfileIds, onS
                 <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>Thumbnail</span>
               </div>
             )}
-            <button onClick={() => onSelectTemplate(template.id)} style={{ display: "block", width: "100%", textAlign: "left" }}>
-              <strong>{template.name}</strong>
-              <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                {template.palletLevels} lvl
-                {mode === "normal" && (
-                  <>
-                    {" · "}
-                    {toInches(template.frameDepthIn)}" depth · {toInches(template.beamLengthIn)}" beam
-                  </>
-                )}
-              </div>
-            </button>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 4 }}>
+              <button onClick={() => onSelectTemplate(template.id)} style={{ display: "block", flex: 1, textAlign: "left" }}>
+                <strong>{template.name}</strong>
+                <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+                  {template.palletLevels} lvl
+                  {mode === "normal" && (
+                    <>
+                      {" · "}
+                      {toInches(template.frameDepthIn)}" depth · {toInches(template.beamLengthIn)}" beam
+                    </>
+                  )}
+                </div>
+              </button>
+              <button
+                type="button"
+                aria-label={`Edit ${template.name}`}
+                onClick={() => onEditTemplate(template.id)}
+                style={{ fontSize: 11, padding: "2px 6px", flexShrink: 0 }}
+              >
+                Edit
+              </button>
+            </div>
 
             {variantsFor(template.id).length > 0 && (
               <ul style={{ listStyle: "none", paddingLeft: 12, margin: "4px 0 0" }}>

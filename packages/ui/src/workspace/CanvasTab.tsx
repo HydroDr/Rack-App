@@ -1,13 +1,20 @@
 /**
  * Hosts the canvas renderer + toolbar + panels (Spec §6.3, §6.3.1-§6.3.4).
  *
- * Coordinate/interaction scope for Phase 4: a fixed pixels-per-inch scale
- * (no pan/zoom yet), click-to-place (after picking a template in
- * TemplatePanel) rather than full drag-and-drop, and simple prompt()-based
- * inputs for Array/Repeat count and Mirror axis position. These are
- * intentional MVP simplifications flagged for refinement once this is
- * visible and Juan can react to how it actually feels to use — not a
- * substitute for the real interaction design.
+ * Coordinate/interaction scope for Phase 4: click-to-place (after picking
+ * a template in TemplatePanel) rather than full drag-and-drop, and simple
+ * prompt()-based inputs for Array/Repeat count and Mirror axis position.
+ * These are intentional MVP simplifications flagged for refinement once
+ * this is visible and Juan can react to how it actually feels to use —
+ * not a substitute for the real interaction design.
+ *
+ * Pan/zoom (Phase 7, Spec §6.3): the view transform (viewTransform.zoom/
+ * panX/panY) lives on `app.stage` — `scene.root` (rebuilt fresh every
+ * render by renderScene()) carries no transform of its own. Every
+ * screen<->world conversion (screenToWorldIn, the zone-drag preview
+ * overlay) must go through the current transform, never the bare
+ * PIXELS_PER_INCH constant directly, or tool placement/zone drawing/
+ * selection will misfire the moment the canvas is panned or zoomed.
  *
  * Every mutating action here goes through commandStack (placeTemplate,
  * applyArrayRepeat, mirrorSelection, createPathLaneTool, and the generic
@@ -16,6 +23,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Application } from "pixi.js";
 import {
   applyArrayRepeat,
@@ -50,8 +58,24 @@ export interface CanvasTabProps {
 }
 
 const PIXELS_PER_INCH = 0.15;
+const MIN_ZOOM = 0.1;
+const MAX_ZOOM = 10;
+const ZOOM_STEP = 1.1;
+
+interface ViewTransform {
+  readonly zoom: number;
+  readonly panX: number;
+  readonly panY: number;
+}
+
+function isEditableElement(element: Element | null): boolean {
+  if (element === null) return false;
+  const tag = element.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (element as HTMLElement).isContentEditable;
+}
 
 export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProps) {
+  const navigate = useNavigate();
   const { layoutStore, historyStore } = useAppStores();
   const rackInstances = useLayoutStore((state) => state.rackInstances);
   const warehouseElements = useLayoutStore((state) => state.warehouseElements);
@@ -75,6 +99,12 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const [zoneDragStart, setZoneDragStart] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
   const [zoneDragCurrent, setZoneDragCurrent] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
   const [isWarningsPanelOpen, setIsWarningsPanelOpen] = useState(false);
+
+  const [viewTransform, setViewTransform] = useState<ViewTransform>({ zoom: 1, panX: 0, panY: 0 });
+  const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const panStateRef = useRef<{ startScreenX: number; startScreenY: number; startPanX: number; startPanY: number } | null>(null);
+  const effectiveScale = PIXELS_PER_INCH * viewTransform.zoom;
 
   useEffect(() => {
     let disposed = false;
@@ -102,6 +132,55 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
         app.destroy(true, { children: true });
       }
     };
+  }, []);
+
+  // Spacebar-held pan mode, tracked globally (not scoped to the canvas div) so releasing the
+  // key anywhere still ends panning. Ignored while typing into a form control, so a designer
+  // typing "Fast Movers" into a Zone-name prompt doesn't accidentally arm panning on each space.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent): void {
+      if (event.code !== "Space" || isEditableElement(document.activeElement)) return;
+      event.preventDefault();
+      setIsSpacePressed(true);
+    }
+    function handleKeyUp(event: KeyboardEvent): void {
+      if (event.code !== "Space") return;
+      setIsSpacePressed(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  // Mouse-wheel zoom, centered on the cursor. Attached as a native, non-passive listener —
+  // React's synthetic onWheel is passive by default, so event.preventDefault() inside it
+  // wouldn't actually stop the page from scrolling underneath the canvas.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+
+    function handleWheel(event: WheelEvent): void {
+      event.preventDefault();
+      const rect = container!.getBoundingClientRect();
+      const cursorX = event.clientX - rect.left;
+      const cursorY = event.clientY - rect.top;
+      const zoomFactor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+
+      setViewTransform((current) => {
+        const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, current.zoom * zoomFactor));
+        const oldScale = PIXELS_PER_INCH * current.zoom;
+        const newScale = PIXELS_PER_INCH * nextZoom;
+        const worldX = (cursorX - current.panX) / oldScale;
+        const worldY = (cursorY - current.panY) / oldScale;
+        return { zoom: nextZoom, panX: cursorX - worldX * newScale, panY: cursorY - worldY * newScale };
+      });
+    }
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
   }, []);
 
   const renderInputs = useMemo((): readonly RackRenderInput[] => {
@@ -139,7 +218,8 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
       rackInstances: renderInputs,
       pathLanes: Array.from(pathLanes.values()),
     });
-    scene.root.scale.set(PIXELS_PER_INCH);
+    app.stage.scale.set(effectiveScale);
+    app.stage.position.set(viewTransform.panX, viewTransform.panY);
     app.stage.removeChildren();
     app.stage.addChild(scene.root);
   });
@@ -155,7 +235,18 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     const rect = event.currentTarget.getBoundingClientRect();
     const localX = event.clientX - rect.left;
     const localY = event.clientY - rect.top;
-    return { xIn: fromInches(localX / PIXELS_PER_INCH), yIn: fromInches(localY / PIXELS_PER_INCH) };
+    return {
+      xIn: fromInches((localX - viewTransform.panX) / effectiveScale),
+      yIn: fromInches((localY - viewTransform.panY) / effectiveScale),
+    };
+  }
+
+  /** Inverse of screenToWorldIn — used by screen-space overlays (the zone-drag preview) so they track the canvas under the current pan/zoom instead of drifting from it. */
+  function worldInToScreenPx(xIn: ReturnType<typeof fromInches>, yIn: ReturnType<typeof fromInches>): { x: number; y: number } {
+    return {
+      x: toInches(xIn) * effectiveScale + viewTransform.panX,
+      y: toInches(yIn) * effectiveScale + viewTransform.panY,
+    };
   }
 
   function handleCanvasClick(event: React.MouseEvent<HTMLDivElement>): void {
@@ -199,7 +290,18 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
 
   const MIN_ZONE_DRAG_IN = 12;
 
+  /** Middle mouse button, or spacebar held with the left button — Spec §6.3's pan gesture. */
+  function isPanTrigger(event: React.MouseEvent<HTMLDivElement>): boolean {
+    return event.button === 1 || (event.button === 0 && isSpacePressed);
+  }
+
   function handleCanvasMouseDown(event: React.MouseEvent<HTMLDivElement>): void {
+    if (isPanTrigger(event)) {
+      event.preventDefault();
+      panStateRef.current = { startScreenX: event.clientX, startScreenY: event.clientY, startPanX: viewTransform.panX, startPanY: viewTransform.panY };
+      setIsPanning(true);
+      return;
+    }
     if (activeToolId !== "zone") return;
     const point = screenToWorldIn(event);
     setZoneDragStart(point);
@@ -207,11 +309,23 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   }
 
   function handleCanvasMouseMove(event: React.MouseEvent<HTMLDivElement>): void {
+    const panState = panStateRef.current;
+    if (panState !== null) {
+      const dx = event.clientX - panState.startScreenX;
+      const dy = event.clientY - panState.startScreenY;
+      setViewTransform((current) => ({ ...current, panX: panState.startPanX + dx, panY: panState.startPanY + dy }));
+      return;
+    }
     if (activeToolId !== "zone" || zoneDragStart === null) return;
     setZoneDragCurrent(screenToWorldIn(event));
   }
 
   function handleCanvasMouseUp(event: React.MouseEvent<HTMLDivElement>): void {
+    if (panStateRef.current !== null) {
+      panStateRef.current = null;
+      setIsPanning(false);
+      return;
+    }
     if (activeToolId !== "zone" || zoneDragStart === null) return;
     const end = screenToWorldIn(event);
     setZoneDragStart(null);
@@ -332,6 +446,10 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           Export PDF
         </button>
         {pdfExportError !== null && <span style={{ color: "crimson" }}>{pdfExportError}</span>}
+        <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{Math.round(viewTransform.zoom * 100)}%</span>
+        <button type="button" onClick={() => setViewTransform({ zoom: 1, panX: 0, panY: 0 })}>
+          Reset View
+        </button>
         {instanceWarnings.length > 0 && (
           <button
             type="button"
@@ -362,6 +480,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           variants={variants}
           activePalletProfileIds={new Set()}
           onSelectTemplate={(templateId) => setSelectedTemplateId(templateId)}
+          onEditTemplate={(templateId) => navigate(`/templates/${templateId}/edit`)}
         />
         <LayersGroupsPanel
           groups={Array.from(groupLayers.values())}
@@ -383,23 +502,35 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
-          style={{ flex: 1, position: "relative", overflow: "hidden", background: "#f4f5f7" }}
+          style={{
+            flex: 1,
+            position: "relative",
+            overflow: "hidden",
+            background: "#f4f5f7",
+            cursor: isPanning ? "grabbing" : isSpacePressed ? "grab" : undefined,
+          }}
         >
-          {zoneDragStart !== null && zoneDragCurrent !== null && (
-            <div
-              data-testid="zone-drag-preview"
-              style={{
-                position: "absolute",
-                pointerEvents: "none",
-                border: "1px dashed #2684ff",
-                background: "rgba(38, 132, 255, 0.1)",
-                left: Math.min(toInches(zoneDragStart.xIn), toInches(zoneDragCurrent.xIn)) * PIXELS_PER_INCH,
-                top: Math.min(toInches(zoneDragStart.yIn), toInches(zoneDragCurrent.yIn)) * PIXELS_PER_INCH,
-                width: Math.abs(toInches(zoneDragCurrent.xIn) - toInches(zoneDragStart.xIn)) * PIXELS_PER_INCH,
-                height: Math.abs(toInches(zoneDragCurrent.yIn) - toInches(zoneDragStart.yIn)) * PIXELS_PER_INCH,
-              }}
-            />
-          )}
+          {zoneDragStart !== null &&
+            zoneDragCurrent !== null &&
+            (() => {
+              const startPx = worldInToScreenPx(zoneDragStart.xIn, zoneDragStart.yIn);
+              const currentPx = worldInToScreenPx(zoneDragCurrent.xIn, zoneDragCurrent.yIn);
+              return (
+                <div
+                  data-testid="zone-drag-preview"
+                  style={{
+                    position: "absolute",
+                    pointerEvents: "none",
+                    border: "1px dashed #2684ff",
+                    background: "rgba(38, 132, 255, 0.1)",
+                    left: Math.min(startPx.x, currentPx.x),
+                    top: Math.min(startPx.y, currentPx.y),
+                    width: Math.abs(currentPx.x - startPx.x),
+                    height: Math.abs(currentPx.y - startPx.y),
+                  }}
+                />
+              );
+            })()}
         </div>
         <PropertiesPanel
           instance={selectedInstance}

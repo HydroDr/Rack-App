@@ -57,6 +57,14 @@ export function App() {
             }
           />
           <Route
+            path={ROUTE_PATHS.editTemplate}
+            element={
+              <RequireAuth>
+                <TemplateEditorPage />
+              </RequireAuth>
+            }
+          />
+          <Route
             path={ROUTE_PATHS.settings}
             element={
               <RequireAuth>

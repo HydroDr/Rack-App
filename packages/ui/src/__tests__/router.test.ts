@@ -10,6 +10,7 @@ describe("router.ts — Spec §6.3a: Client View must never require the account 
     expect(isPublicRoute(ROUTE_PATHS.dashboard)).toBe(false);
     expect(isPublicRoute(ROUTE_PATHS.projectWorkspace)).toBe(false);
     expect(isPublicRoute(ROUTE_PATHS.newTemplate)).toBe(false);
+    expect(isPublicRoute(ROUTE_PATHS.editTemplate)).toBe(false);
     expect(isPublicRoute(ROUTE_PATHS.settings)).toBe(false);
   });
 

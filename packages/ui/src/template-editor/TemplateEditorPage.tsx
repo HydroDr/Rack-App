@@ -4,26 +4,42 @@
  * color, and "Save as Template" locks the definition in, making it
  * available in the Template Panel.
  *
- * Phase 4 scope: creates a new Rack Template. Loading an existing
- * template by id for editing isn't wired yet — a reasonable follow-up,
- * not built now given the size of this phase.
+ * Phase 7: also loads an existing Rack Template for editing when reached
+ * via /templates/:templateId/edit — `existingTemplate` (the record as
+ * loaded) is kept around purely to preserve its id/createdAt/schemaVersion
+ * on save; every other field is free-form local form state exactly like
+ * the create path. Saving an edit calls the same `saveTemplate()` upsert
+ * repositories.templates already uses for creation (it's keyed by id), so
+ * this never risks creating a duplicate record.
  */
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { fromInches } from "@rack-app/rules-engine";
-import { createRackTemplate, type ComponentColorMap, type EntityId, type PalletProfile } from "@rack-app/state";
+import { useNavigate, useParams } from "react-router-dom";
+import { fromInches, toInches, weightLb } from "@rack-app/rules-engine";
+import {
+  createRackTemplate,
+  nowIsoTimestamp,
+  validateTemplate,
+  type ComponentColorMap,
+  type EntityId,
+  type PalletProfile,
+  type RackTemplate,
+} from "@rack-app/state";
 import { useAppStores } from "../app/stores.js";
 import { PalletProfileForm } from "../pallet-profiles/PalletProfileForm.js";
 import { FrontViewCanvas } from "./FrontViewCanvas.js";
 import { ComponentColorPicker } from "./ComponentColorPicker.js";
 
 const DEFAULT_CEILING_CLEARANCE_IN = 24;
+/** Spec §3.1c default beam-capacity safety margin. */
+const DEFAULT_CAPACITY_MARGIN_LB = 300;
 
 export function TemplateEditorPage() {
   const { repositories } = useAppStores();
   const navigate = useNavigate();
+  const { templateId } = useParams<{ templateId: string }>();
 
+  const [existingTemplate, setExistingTemplate] = useState<RackTemplate | null>(null);
   const [palletProfiles, setPalletProfiles] = useState<readonly PalletProfile[]>([]);
   const [name, setName] = useState("New Selective Rack Template");
   const [palletProfileId, setPalletProfileId] = useState<EntityId | "">("");
@@ -33,6 +49,7 @@ export function TemplateEditorPage() {
   const [frameDepthIn, setFrameDepthIn] = useState(42);
   const [beamLengthIn, setBeamLengthIn] = useState(96);
   const [levelCapacityLb, setLevelCapacityLb] = useState(2500);
+  const [capacityMarginLb, setCapacityMarginLb] = useState(DEFAULT_CAPACITY_MARGIN_LB);
   const [ceilingHeightIn, setCeilingHeightIn] = useState(300);
   const [componentColors, setComponentColors] = useState<ComponentColorMap>({});
 
@@ -42,14 +59,40 @@ export function TemplateEditorPage() {
     });
   }, [repositories]);
 
+  useEffect(() => {
+    if (templateId === undefined) return;
+    void repositories.templates.getTemplate(templateId as EntityId).then((result) => {
+      if (result.kind === "error") {
+        window.alert(result.message);
+        return;
+      }
+      const template = result.value;
+      if (template === undefined || template.templateType !== "rack") {
+        window.alert("That template couldn't be found.");
+        return;
+      }
+      setExistingTemplate(template);
+      setName(template.name);
+      setPalletProfileId(template.palletProfileId);
+      setPalletLevels(template.palletLevels);
+      setPalletHeightIn(toInches(template.palletHeightIn));
+      setClearanceIn(toInches(template.clearanceIn));
+      setFrameDepthIn(toInches(template.frameDepthIn));
+      setBeamLengthIn(toInches(template.beamLengthIn));
+      setLevelCapacityLb(template.levelCapacitiesLb[0] ?? 2500);
+      setCapacityMarginLb(template.capacityMarginLb ?? DEFAULT_CAPACITY_MARGIN_LB);
+      setComponentColors(template.componentColors);
+    });
+  }, [repositories, templateId]);
+
   async function handleSave(): Promise<void> {
     if (palletProfileId === "") {
       window.alert("Pick a pallet profile first.");
       return;
     }
 
-    const result = createRackTemplate({
-      templateType: "rack",
+    const sharedFields = {
+      templateType: "rack" as const,
       name,
       componentColors,
       palletProfileId,
@@ -59,7 +102,13 @@ export function TemplateEditorPage() {
       frameDepthIn: fromInches(frameDepthIn),
       beamLengthIn: fromInches(beamLengthIn),
       levelCapacitiesLb: Array.from({ length: palletLevels }, () => levelCapacityLb) as never,
-    });
+      capacityMarginLb: weightLb(capacityMarginLb),
+    };
+
+    const result =
+      existingTemplate === null
+        ? createRackTemplate(sharedFields)
+        : validateTemplate({ ...existingTemplate, ...sharedFields, updatedAt: nowIsoTimestamp() });
     if (result.kind === "error") {
       window.alert(result.message);
       return;
@@ -77,7 +126,7 @@ export function TemplateEditorPage() {
   return (
     <div style={{ display: "flex", gap: 24, padding: 24 }}>
       <div style={{ flex: 1, maxWidth: 420 }}>
-        <h1>Template Editor</h1>
+        <h1>{existingTemplate === null ? "Template Editor" : `Edit Template — ${existingTemplate.name}`}</h1>
 
         <label style={{ display: "block", marginBottom: 8 }}>
           Name: <input value={name} onChange={(event) => setName(event.target.value)} style={{ width: "100%" }} />
@@ -131,6 +180,11 @@ export function TemplateEditorPage() {
           </label>
           <br />
           <label>
+            Beam-capacity margin (lb):{" "}
+            <input type="number" min={0} value={capacityMarginLb} onChange={(event) => setCapacityMarginLb(Number(event.target.value))} />
+          </label>
+          <br />
+          <label>
             Ceiling obstruction height (in): <input type="number" value={ceilingHeightIn} onChange={(event) => setCeilingHeightIn(Number(event.target.value))} />
           </label>
         </fieldset>
@@ -138,7 +192,7 @@ export function TemplateEditorPage() {
         <ComponentColorPicker colors={componentColors} onChange={(component, color) => setComponentColors({ ...componentColors, [component]: color })} />
 
         <button onClick={() => void handleSave()} style={{ marginTop: 12, padding: "8px 14px", background: "var(--color-accent)", color: "white", border: "none", borderRadius: 6 }}>
-          Save as Template
+          {existingTemplate === null ? "Save as Template" : "Save Changes"}
         </button>
       </div>
 
