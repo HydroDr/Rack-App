@@ -22,6 +22,7 @@ import {
   type Layout,
   type LayoutRepository,
   type PathLane,
+  type ProtectorPlacement,
   type RackInstance,
   type Repository,
   type WarehouseElement,
@@ -29,7 +30,16 @@ import {
 } from "@rack-app/data";
 import { ok, type Result } from "@rack-app/rules-engine";
 import type { HistoryStore } from "./historyStore.js";
-import { selectBlockStackZones, selectGroupLayers, selectPathLanes, selectRackInstances, selectWarehouseElements, selectZones, type LayoutStore } from "./layoutStore.js";
+import {
+  selectBlockStackZones,
+  selectGroupLayers,
+  selectPathLanes,
+  selectProtectorPlacements,
+  selectRackInstances,
+  selectWarehouseElements,
+  selectZones,
+  type LayoutStore,
+} from "./layoutStore.js";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -41,6 +51,7 @@ export interface AutosaveRepositories {
   readonly groupLayers: Repository<GroupLayer>;
   readonly zones: Repository<Zone>;
   readonly blockStackZones: Repository<BlockStackZone>;
+  readonly protectorPlacements: Repository<ProtectorPlacement>;
 }
 
 export interface AutosaveManager {
@@ -111,6 +122,7 @@ export function createAutosaveManager(
       reconcileLayoutScopedRepository(repositories.groupLayers, layoutId, selectGroupLayers(layoutState)),
       reconcileLayoutScopedRepository(repositories.zones, layoutId, selectZones(layoutState)),
       reconcileLayoutScopedRepository(repositories.blockStackZones, layoutId, selectBlockStackZones(layoutState)),
+      reconcileLayoutScopedRepository(repositories.protectorPlacements, layoutId, selectProtectorPlacements(layoutState)),
     ]);
 
     const firstError = results.find((result) => result.kind === "error");

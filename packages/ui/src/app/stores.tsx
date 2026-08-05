@@ -31,6 +31,7 @@ import {
   type PalletProfile,
   type PathLane,
   type ProjectStore,
+  type ProtectorPlacement,
   type RackInstance,
   type Repository,
   type RoiScenario,
@@ -57,6 +58,7 @@ export interface AppRepositories {
   readonly roiScenarios: Repository<RoiScenario>;
   readonly notes: Repository<NoteAttachment>;
   readonly feedback: Repository<Feedback>;
+  readonly protectorPlacements: Repository<ProtectorPlacement>;
 }
 
 export interface AppStores {
@@ -91,6 +93,7 @@ function createAppStores(databaseName: string): AppStores {
     roiScenarios: createIndexedDbRepository<RoiScenario>(db.roiScenarios as never),
     notes: createIndexedDbRepository<NoteAttachment>(db.noteAttachments as never),
     feedback: createIndexedDbRepository<Feedback>(db.feedback as never),
+    protectorPlacements: createIndexedDbRepository<ProtectorPlacement>(db.protectorPlacements as never),
   };
 
   const projectStore = createProjectStore();
@@ -107,6 +110,7 @@ function createAppStores(databaseName: string): AppStores {
     groupLayers: repositories.groupLayers,
     zones: repositories.zones,
     blockStackZones: repositories.blockStackZones,
+    protectorPlacements: repositories.protectorPlacements,
   });
 
   return { projectStore, layoutStore, uiPreferencesStore, historyStore, repositories };

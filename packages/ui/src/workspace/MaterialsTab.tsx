@@ -29,6 +29,7 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
   const rackInstances = useLayoutStore((state) => state.rackInstances);
   const selectedIds = useLayoutStore((state) => state.selectedIds);
   const zones = useLayoutStore((state) => state.zones);
+  const protectorPlacements = useLayoutStore((state) => state.protectorPlacements);
   const defaultAnchorsPerUpright = useUiPreferencesStore((state) => state.defaultAnchorsPerUpright);
 
   const [scope, setScope] = useState<Scope>("all");
@@ -56,12 +57,13 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
       if (template === undefined) continue;
       const palletProfile = palletProfiles.find((candidate) => candidate.id === template.palletProfileId);
       if (palletProfile === undefined) continue;
+      const protectorPlacement = Array.from(protectorPlacements.values()).find((candidate) => candidate.rackInstanceId === instance.id);
 
-      const result = computeInstanceBom(instance, template, palletProfile, defaultAnchorsPerUpright);
+      const result = computeInstanceBom(instance, template, palletProfile, defaultAnchorsPerUpright, protectorPlacement);
       if (result.kind !== "error") results.push(result.value);
     }
     return buildMaterialLineItems(results);
-  }, [scopedInstances, templates, palletProfiles, defaultAnchorsPerUpright]);
+  }, [scopedInstances, templates, palletProfiles, defaultAnchorsPerUpright, protectorPlacements]);
 
   return (
     <div style={{ padding: 16 }}>

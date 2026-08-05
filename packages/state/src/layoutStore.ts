@@ -13,6 +13,7 @@ import type {
   EntityId,
   GroupLayer,
   PathLane,
+  ProtectorPlacement,
   RackInstance,
   WarehouseElement,
   Zone,
@@ -25,6 +26,7 @@ export interface LayoutEntities {
   readonly groupLayers: ReadonlyMap<EntityId, GroupLayer>;
   readonly zones: ReadonlyMap<EntityId, Zone>;
   readonly blockStackZones: ReadonlyMap<EntityId, BlockStackZone>;
+  readonly protectorPlacements: ReadonlyMap<EntityId, ProtectorPlacement>;
 }
 
 export interface LayoutStoreState extends LayoutEntities {
@@ -40,6 +42,7 @@ function emptyEntities(): LayoutEntities {
     groupLayers: new Map(),
     zones: new Map(),
     blockStackZones: new Map(),
+    protectorPlacements: new Map(),
   };
 }
 
@@ -66,6 +69,9 @@ export interface LayoutStoreActions {
 
   upsertBlockStackZone(zone: BlockStackZone): void;
   removeBlockStackZone(id: EntityId): void;
+
+  upsertProtectorPlacement(placement: ProtectorPlacement): void;
+  removeProtectorPlacement(id: EntityId): void;
 
   setSelection(ids: ReadonlySet<EntityId>): void;
   toggleSelection(id: EntityId): void;
@@ -126,6 +132,10 @@ export function createLayoutStore(): StoreApi<LayoutStore> {
     upsertBlockStackZone: (zone) => set((state) => ({ blockStackZones: withUpsert(state.blockStackZones, zone.id, zone) })),
     removeBlockStackZone: (id) => set((state) => ({ blockStackZones: withRemoval(state.blockStackZones, id) })),
 
+    upsertProtectorPlacement: (placement) =>
+      set((state) => ({ protectorPlacements: withUpsert(state.protectorPlacements, placement.id, placement) })),
+    removeProtectorPlacement: (id) => set((state) => ({ protectorPlacements: withRemoval(state.protectorPlacements, id) })),
+
     setSelection: (selectedIds) => set({ selectedIds }),
 
     toggleSelection: (id) =>
@@ -168,4 +178,8 @@ export function selectZones(state: LayoutStoreState): readonly Zone[] {
 
 export function selectBlockStackZones(state: LayoutStoreState): readonly BlockStackZone[] {
   return Array.from(state.blockStackZones.values());
+}
+
+export function selectProtectorPlacements(state: LayoutStoreState): readonly ProtectorPlacement[] {
+  return Array.from(state.protectorPlacements.values());
 }

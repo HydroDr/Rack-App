@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { diffBom, type DiffResult } from "@rack-app/rules-engine";
-import type { EntityId, Layout, PalletProfile, RackInstance, RackTemplate } from "@rack-app/state";
+import type { EntityId, Layout, PalletProfile, ProtectorPlacement, RackInstance, RackTemplate } from "@rack-app/state";
 import { useAppStores, useLayoutStore, useUiPreferencesStore } from "../app/stores.js";
 import { computeLayoutBom } from "./bomUtils.js";
 
@@ -20,6 +20,7 @@ export interface CompareTabProps {
 export function CompareTab({ currentLayoutId, layouts, templates, palletProfiles }: CompareTabProps) {
   const { repositories } = useAppStores();
   const currentInstances = useLayoutStore((state) => Array.from(state.rackInstances.values()));
+  const currentProtectorPlacements = useLayoutStore((state) => Array.from(state.protectorPlacements.values()));
   const defaultAnchorsPerUpright = useUiPreferencesStore((state) => state.defaultAnchorsPerUpright);
 
   const [layoutAId, setLayoutAId] = useState<EntityId>(currentLayoutId);
@@ -35,6 +36,13 @@ export function CompareTab({ currentLayoutId, layouts, templates, palletProfiles
     return result.value.filter((instance) => instance.layoutId === layoutId);
   }
 
+  async function loadProtectorPlacementsFor(layoutId: EntityId): Promise<readonly ProtectorPlacement[]> {
+    if (layoutId === currentLayoutId) return currentProtectorPlacements;
+    const result = await repositories.protectorPlacements.list();
+    if (result.kind === "error") throw new Error(result.message);
+    return result.value.filter((placement) => placement.layoutId === layoutId);
+  }
+
   useEffect(() => {
     if (layoutBId === "") {
       setDiffResult(null);
@@ -45,11 +53,16 @@ export function CompareTab({ currentLayoutId, layouts, templates, palletProfiles
     setIsComparing(true);
     setErrorMessage(null);
 
-    Promise.all([loadInstancesFor(layoutAId), loadInstancesFor(layoutBId)])
-      .then(([instancesA, instancesB]) => {
+    Promise.all([
+      loadInstancesFor(layoutAId),
+      loadInstancesFor(layoutBId),
+      loadProtectorPlacementsFor(layoutAId),
+      loadProtectorPlacementsFor(layoutBId),
+    ])
+      .then(([instancesA, instancesB, protectorPlacementsA, protectorPlacementsB]) => {
         if (cancelled) return;
-        const bomA = computeLayoutBom(instancesA, templates, palletProfiles, defaultAnchorsPerUpright);
-        const bomB = computeLayoutBom(instancesB, templates, palletProfiles, defaultAnchorsPerUpright);
+        const bomA = computeLayoutBom(instancesA, templates, palletProfiles, defaultAnchorsPerUpright, protectorPlacementsA);
+        const bomB = computeLayoutBom(instancesB, templates, palletProfiles, defaultAnchorsPerUpright, protectorPlacementsB);
         const result = diffBom(bomA, bomB);
         setDiffResult(result.kind === "error" ? null : result.value);
         if (result.kind === "error") setErrorMessage(result.message);

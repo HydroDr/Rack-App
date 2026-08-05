@@ -6,16 +6,10 @@
  * files; it's the UI-layer wiring those files need to actually call
  * rules-engine's formulas with real data.
  *
- * Known simplifications, both flagged for a future phase rather than
- * silently assumed:
- *  - palletsPerLevel is derived from beamLengthIn / pallet width
- *    (Spec §2.3: beam span scales with pallets-per-beam), since
- *    RackTemplate has no explicit palletsPerLevel field.
- *  - Protector placement (which line-ends have an end-of-aisle
- *    protector, how many uprights have a column protector) has no data
- *    model yet — Phase 1 only modeled the Protector Template *type*,
- *    not placement — so every instance computes with zero protectors
- *    until that's built.
+ * Known simplification, flagged for a future phase rather than
+ * silently assumed: palletsPerLevel is derived from beamLengthIn /
+ * pallet width (Spec §2.3: beam span scales with pallets-per-beam),
+ * since RackTemplate has no explicit palletsPerLevel field.
  */
 
 import {
@@ -27,7 +21,7 @@ import {
   type BomResult,
   type Result,
 } from "@rack-app/rules-engine";
-import type { PalletProfile, RackInstance, RackTemplate } from "@rack-app/state";
+import type { LineEndProtectorFlags, PalletProfile, ProtectorPlacement, RackInstance, RackTemplate } from "@rack-app/state";
 
 /** Spec §3.1: "the 8-per-protector multiplier is also user-editable" — a stated default, not yet its own Account Setting field. */
 const DEFAULT_ANCHORS_PER_PROTECTOR = 8;
@@ -48,11 +42,17 @@ export function resolveInstanceRowSpacerLengthIn(instance: RackInstance, templat
   return resolveAccountOrTemplate(accountDefaultIn, templateOverrideIn);
 }
 
+/** Reads a ProtectorPlacement's lineEndProtectors into an array of exactly rackColumns length — pads missing lines with no-protector and ignores extras, so a placement that's drifted out of sync with its instance (e.g. after a column-count edit) degrades gracefully instead of failing the whole BOM. */
+function resolveLineEndProtectors(rackColumns: number, protectorPlacement: ProtectorPlacement | undefined): readonly LineEndProtectorFlags[] {
+  return Array.from({ length: rackColumns }, (_, index) => protectorPlacement?.lineEndProtectors[index] ?? { frontEnd: false, backEnd: false });
+}
+
 export function computeInstanceBom(
   instance: RackInstance,
   template: RackTemplate,
   palletProfile: PalletProfile,
   defaultAnchorsPerUpright: number,
+  protectorPlacement: ProtectorPlacement | undefined,
 ): Result<BomResult> {
   const palletsPerLevel = Math.max(1, Math.floor(toInches(template.beamLengthIn) / toInches(palletProfile.widthIn)));
 
@@ -71,8 +71,8 @@ export function computeInstanceBom(
     rackColumns: instance.rackColumns,
     uprightHeightIn: Math.round(totalRackHeightIn),
     resolvedRowSpacerLengthIn,
-    lineEndProtectors: Array.from({ length: instance.rackColumns }, () => ({ frontEnd: false, backEnd: false })),
-    columnProtectorCount: 0,
+    lineEndProtectors: resolveLineEndProtectors(instance.rackColumns, protectorPlacement),
+    columnProtectorCount: protectorPlacement?.columnProtectorUprightIndices.length ?? 0,
     anchorsPerUpright,
     anchorsPerProtector,
     catalog: interlakeDefaultCatalog,
@@ -169,6 +169,7 @@ export function computeLayoutBom(
   templates: readonly RackTemplate[],
   palletProfiles: readonly PalletProfile[],
   defaultAnchorsPerUpright: number,
+  protectorPlacements: readonly ProtectorPlacement[] = [],
 ): BomResult {
   const results: BomResult[] = [];
   for (const instance of instances) {
@@ -176,8 +177,9 @@ export function computeLayoutBom(
     if (template === undefined) continue;
     const palletProfile = palletProfiles.find((candidate) => candidate.id === template.palletProfileId);
     if (palletProfile === undefined) continue;
+    const protectorPlacement = protectorPlacements.find((candidate) => candidate.rackInstanceId === instance.id);
 
-    const result = computeInstanceBom(instance, template, palletProfile, defaultAnchorsPerUpright);
+    const result = computeInstanceBom(instance, template, palletProfile, defaultAnchorsPerUpright, protectorPlacement);
     if (result.kind !== "error") results.push(result.value);
   }
   return sumBomResults(results);

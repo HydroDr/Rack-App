@@ -46,6 +46,7 @@ function makeRepositories(db: RackAppDatabase): AutosaveRepositories {
     groupLayers: createIndexedDbRepository(db.groupLayers as never),
     zones: createIndexedDbRepository(db.zones as never),
     blockStackZones: createIndexedDbRepository(db.blockStackZones as never),
+    protectorPlacements: createIndexedDbRepository(db.protectorPlacements as never),
   };
 }
 

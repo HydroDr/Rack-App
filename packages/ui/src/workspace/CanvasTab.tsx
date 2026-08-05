@@ -53,6 +53,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const warehouseElements = useLayoutStore((state) => state.warehouseElements);
   const pathLanes = useLayoutStore((state) => state.pathLanes);
   const groupLayers = useLayoutStore((state) => state.groupLayers);
+  const protectorPlacements = useLayoutStore((state) => state.protectorPlacements);
   const selectedIds = useLayoutStore((state) => state.selectedIds);
   const gridColor = useUiPreferencesStore((state) => state.gridColor);
   const defaultAnchorsPerUpright = useUiPreferencesStore((state) => state.defaultAnchorsPerUpright);
@@ -219,9 +220,12 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     if (selectedInstance === null || selectedTemplate === null) return null;
     const palletProfile = palletProfiles.find((profile) => profile.id === selectedTemplate.palletProfileId);
     if (palletProfile === undefined) return null;
-    const result = computeInstanceBom(selectedInstance, selectedTemplate, palletProfile, defaultAnchorsPerUpright);
+    const protectorPlacement = Array.from(protectorPlacements.values()).find(
+      (candidate) => candidate.rackInstanceId === selectedInstance.id,
+    );
+    const result = computeInstanceBom(selectedInstance, selectedTemplate, palletProfile, defaultAnchorsPerUpright, protectorPlacement);
     return result.kind === "error" ? null : result.value.ppo;
-  }, [selectedInstance, selectedTemplate, palletProfiles, defaultAnchorsPerUpright]);
+  }, [selectedInstance, selectedTemplate, palletProfiles, defaultAnchorsPerUpright, protectorPlacements]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

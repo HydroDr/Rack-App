@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import type { Result } from "@rack-app/rules-engine";
-import type { BlockStackZone, EntityId, GroupLayer, PalletProfile, PathLane, RackInstance, RackTemplate, Variant, WarehouseElement, Zone } from "@rack-app/state";
+import type { BlockStackZone, EntityId, GroupLayer, PalletProfile, PathLane, ProtectorPlacement, RackInstance, RackTemplate, Variant, WarehouseElement, Zone } from "@rack-app/state";
 import { useAppStores, useLayoutStore, useProjectStore } from "../app/stores.js";
 import { CanvasTab } from "./CanvasTab.js";
 import { MaterialsTab } from "./MaterialsTab.js";
@@ -63,13 +63,14 @@ export function ProjectWorkspace() {
     if (targetLayoutId === undefined || targetLayoutId === activeLayoutId) return;
 
     async function loadLayoutData(): Promise<void> {
-      const [instances, elements, lanes, groups, zonesList, blockStacks] = await Promise.all([
+      const [instances, elements, lanes, groups, zonesList, blockStacks, protectorPlacements] = await Promise.all([
         repositories.rackInstances.list(),
         repositories.warehouseElements.list(),
         repositories.pathLanes.list(),
         repositories.groupLayers.list(),
         repositories.zones.list(),
         repositories.blockStackZones.list(),
+        repositories.protectorPlacements.list(),
       ]);
 
       function toMap<T extends { readonly id: EntityId; readonly layoutId: EntityId }>(result: Result<readonly T[]>): ReadonlyMap<EntityId, T> {
@@ -84,6 +85,7 @@ export function ProjectWorkspace() {
         groupLayers: toMap<GroupLayer>(groups),
         zones: toMap<Zone>(zonesList),
         blockStackZones: toMap<BlockStackZone>(blockStacks),
+        protectorPlacements: toMap<ProtectorPlacement>(protectorPlacements),
       });
     }
     void loadLayoutData();

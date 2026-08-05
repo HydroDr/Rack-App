@@ -17,6 +17,7 @@ import {
 } from "@rack-app/rules-engine";
 import type {
   PalletProfile,
+  ProtectorPlacement,
   RackInstance,
   RackTemplate,
   RoiModeAAssumptions,
@@ -65,6 +66,7 @@ function computeZonePositionCount(
   templates: readonly RackTemplate[],
   palletProfiles: readonly PalletProfile[],
   defaultAnchorsPerUpright: number,
+  protectorPlacements: readonly ProtectorPlacement[],
 ): { positionCount: number; footprintAreaSqFt: number } {
   const boundsOf = (instance: RackInstance) => {
     const template = templates.find((candidate) => candidate.id === instance.templateId);
@@ -77,7 +79,8 @@ function computeZonePositionCount(
     if (template === undefined) return 0;
     const palletProfile = palletProfiles.find((candidate) => candidate.id === template.palletProfileId);
     if (palletProfile === undefined) return 0;
-    const result = computeInstanceBom(instance, template, palletProfile, defaultAnchorsPerUpright);
+    const protectorPlacement = protectorPlacements.find((candidate) => candidate.rackInstanceId === instance.id);
+    const result = computeInstanceBom(instance, template, palletProfile, defaultAnchorsPerUpright, protectorPlacement);
     return result.kind === "error" ? 0 : result.value.ppo;
   };
 
@@ -88,6 +91,7 @@ function computeZonePositionCount(
 export function RoiTab({ templates, palletProfiles }: RoiTabProps) {
   const zones = useLayoutStore((state) => state.zones);
   const rackInstances = useLayoutStore((state) => state.rackInstances);
+  const protectorPlacements = useLayoutStore((state) => state.protectorPlacements);
   const defaultAnchorsPerUpright = useUiPreferencesStore((state) => state.defaultAnchorsPerUpright);
 
   const [mode, setMode] = useState<RoiMode>("A");
@@ -108,8 +112,15 @@ export function RoiTab({ templates, palletProfiles }: RoiTabProps) {
 
   const derived = useMemo(() => {
     if (selectedZone === undefined) return null;
-    return computeZonePositionCount(selectedZone, rackInstances, templates, palletProfiles, defaultAnchorsPerUpright);
-  }, [selectedZone, rackInstances, templates, palletProfiles, defaultAnchorsPerUpright]);
+    return computeZonePositionCount(
+      selectedZone,
+      rackInstances,
+      templates,
+      palletProfiles,
+      defaultAnchorsPerUpright,
+      Array.from(protectorPlacements.values()),
+    );
+  }, [selectedZone, rackInstances, templates, palletProfiles, defaultAnchorsPerUpright, protectorPlacements]);
 
   const resultA: RoiModeAResult | null = useMemo(() => {
     if (mode !== "A" || derived === null) return null;
