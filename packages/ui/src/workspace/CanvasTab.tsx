@@ -30,6 +30,7 @@ import {
   type RackRenderInput,
 } from "@rack-app/canvas";
 import { fromInches, resolveConfiguration, resolveLevelDefinitions, toInches, type ConfigurationType } from "@rack-app/rules-engine";
+import { exportLayoutPdf, type CanvasSnapshot } from "@rack-app/export";
 import { nowIsoTimestamp, type ComponentType, type EntityId, type GroupLayer, type PalletProfile, type RackTemplate, type Variant } from "@rack-app/state";
 import { useAppStores, useHistoryStore, useLayoutStore, useUiPreferencesStore } from "../app/stores.js";
 import { computeInstanceBounds } from "../app/instanceGeometry.js";
@@ -67,20 +68,33 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const [selectedGroupId, setSelectedGroupId] = useState<EntityId | null>(null);
   const [pathLaneBuilder, setPathLaneBuilder] = useState<ReturnType<typeof createPathLaneTool> | null>(null);
   const [snapSettings, setSnapSettings] = useState<SnapSettings>({ gridSnapEnabled: true, orthoModeEnabled: false, objectSnapEnabled: false });
+  const [pdfExportError, setPdfExportError] = useState<string | null>(null);
 
   useEffect(() => {
     let disposed = false;
+    let initialized = false;
     const app = new Application();
     const initOptions = containerRef.current === null ? { background: "#f4f5f7" } : { background: "#f4f5f7", resizeTo: containerRef.current };
     void app.init(initOptions).then(() => {
-      if (disposed || containerRef.current === null) return;
+      initialized = true;
+      // init() is async, so React StrictMode's mount->cleanup->remount cycle can call the
+      // cleanup below before this resolves — destroying a not-yet-initialized Application
+      // throws inside PixiJS (its resize teardown isn't set up yet), so if disposal already
+      // happened, destroy here instead, once it's actually safe to.
+      if (disposed) {
+        app.destroy(true, { children: true });
+        return;
+      }
+      if (containerRef.current === null) return;
       containerRef.current.appendChild(app.canvas);
       appRef.current = app;
     });
     return () => {
       disposed = true;
       appRef.current = null;
-      app.destroy(true, { children: true });
+      if (initialized) {
+        app.destroy(true, { children: true });
+      }
     };
   }, []);
 
@@ -206,6 +220,18 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     if (toolId === "mirror") handleMirror();
   }
 
+  /** Captures a static snapshot of what renderScene() already drew to the canvas — never re-implements rack drawing (Spec §6.3c, carried over from the Phase 4 review). */
+  async function handleExportPdf(): Promise<void> {
+    setPdfExportError(null);
+    const canvas = appRef.current?.canvas;
+    if (canvas === undefined) return;
+    const snapshot: CanvasSnapshot = { imageDataUrl: canvas.toDataURL("image/png"), widthPx: canvas.width, heightPx: canvas.height };
+    const result = await exportLayoutPdf(snapshot, "Rack Layout");
+    if (result.kind === "error" && result.code !== "SAVE_FILE_CANCELLED") {
+      setPdfExportError(result.message);
+    }
+  }
+
   const groupLayerOps: EntityCommandOps<GroupLayer> = {
     upsert: (group) => layoutStore.getState().upsertGroupLayer(group),
     remove: (id) => layoutStore.getState().removeGroupLayer(id),
@@ -230,6 +256,12 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Toolbar activeToolId={activeToolId} onSelectTool={handleSelectTool} snapSettings={snapSettings} onChangeSnapSettings={setSnapSettings} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px" }}>
+        <button type="button" onClick={() => void handleExportPdf()}>
+          Export PDF
+        </button>
+        {pdfExportError !== null && <span style={{ color: "crimson" }}>{pdfExportError}</span>}
+      </div>
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <TemplatePanel
           templates={templates}

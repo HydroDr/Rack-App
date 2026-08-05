@@ -40,7 +40,7 @@ module.exports = {
           { from: "data", allow: ["data", "rules-engine"] },
           { from: "state", allow: ["state", "data", "rules-engine"] },
           { from: "canvas", allow: ["canvas", "state", "rules-engine"] },
-          { from: "ui", allow: ["ui", "state", "canvas", "rules-engine"] },
+          { from: "ui", allow: ["ui", "state", "canvas", "rules-engine", "export", "import"] },
           { from: "export", allow: ["export", "data", "rules-engine"] },
           { from: "import", allow: ["import", "data", "rules-engine"] },
         ],

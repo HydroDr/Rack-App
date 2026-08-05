@@ -2,11 +2,27 @@
  * Wall clearance defaults, pallet profile multi-select, units override
  * (Spec §6.5) — scoped to one Project, persisted on the Project entity
  * itself (Engineering File Plan §6.6).
+ *
+ * The DXF style import below is read-only preview only: it parses and
+ * displays a DXF's TABLES section (Spec §6.6) but doesn't persist the
+ * result — Project has no drawing-preferences field yet, and adding one
+ * is outside this phase's scope.
  */
 
 import { useEffect, useState } from "react";
+import { importDxfStylePreferences, type ImportedDrawingPreferences } from "@rack-app/import";
 import type { EntityId, PalletProfile, Project, ProjectUnitsOverride, ProjectWallType } from "@rack-app/state";
 import { useAppStores, useProjectStore } from "../app/stores.js";
+
+/** Uses FileReader rather than File.prototype.text() — broader environment support for the same result. */
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read the file."));
+    reader.readAsText(file);
+  });
+}
 
 export interface ProjectSettingsSectionProps {
   readonly projectId: EntityId;
@@ -17,6 +33,8 @@ export function ProjectSettingsSection({ projectId }: ProjectSettingsSectionProp
   const project = useProjectStore((state) => state.projects.find((candidate) => candidate.id === projectId));
   const upsertProject = useProjectStore((state) => state.upsertProject);
   const [palletProfiles, setPalletProfiles] = useState<readonly PalletProfile[]>([]);
+  const [dxfPreferences, setDxfPreferences] = useState<ImportedDrawingPreferences | null>(null);
+  const [dxfError, setDxfError] = useState<string | null>(null);
 
   useEffect(() => {
     void repositories.palletProfiles.list().then((result) => {
@@ -43,6 +61,25 @@ export function ProjectSettingsSection({ projectId }: ProjectSettingsSectionProp
     if (project === undefined) return;
     const { unitsOverride: _unused, ...withoutOverride } = project;
     await saveProject({ ...withoutOverride, updatedAt: new Date().toISOString() });
+  }
+
+  async function handleDxfFileChange(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file === undefined) return;
+    setDxfError(null);
+    setDxfPreferences(null);
+    try {
+      const text = await readFileAsText(file);
+      const result = importDxfStylePreferences(text);
+      if (result.kind === "error") {
+        setDxfError(result.message);
+        return;
+      }
+      setDxfPreferences(result.value);
+    } catch (cause) {
+      setDxfError(cause instanceof Error ? cause.message : "Failed to read the file.");
+    }
   }
 
   if (project === undefined) {
@@ -101,6 +138,20 @@ export function ProjectSettingsSection({ projectId }: ProjectSettingsSectionProp
             <input type="checkbox" checked={activeIds.has(profile.id)} onChange={() => toggleProfile(profile.id)} /> {profile.name}
           </label>
         ))}
+      </fieldset>
+
+      <fieldset style={{ marginTop: 16 }}>
+        <legend>Import DXF drawing styles (preview)</legend>
+        <input type="file" accept=".dxf" onChange={(event) => void handleDxfFileChange(event)} />
+        {dxfError !== null && <p style={{ color: "crimson" }}>{dxfError}</p>}
+        {dxfPreferences !== null && (
+          <ul style={{ fontSize: 13 }}>
+            <li>Layers: {dxfPreferences.layers.map((layer) => layer.name).join(", ") || "none"}</li>
+            <li>Text styles: {dxfPreferences.textStyles.map((style) => style.name).join(", ") || "none"}</li>
+            <li>Dimension styles: {dxfPreferences.dimStyles.map((style) => style.name).join(", ") || "none"}</li>
+            <li>Linetypes: {dxfPreferences.lineTypes.map((lineType) => lineType.name).join(", ") || "none"}</li>
+          </ul>
+        )}
       </fieldset>
     </section>
   );

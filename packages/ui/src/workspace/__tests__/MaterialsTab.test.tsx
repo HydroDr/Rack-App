@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { describe, expect, it } from "vitest";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { fromInches } from "@rack-app/rules-engine";
 import type { PalletProfile, RackInstance, RackTemplate } from "@rack-app/state";
 import { AppStoresProvider, useAppStores, type AppStores } from "../../app/stores.js";
@@ -64,6 +64,40 @@ function StoresCapture({ onReady }: { onReady: (stores: AppStores) => void }) {
 }
 
 describe("MaterialsTab — Engineering File Plan §6.2: must re-render from live layoutStore, never a cached count", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("disables Export CSV when there are no materials, enables it once an instance exists, and triggers a save on click", async () => {
+    let stores: AppStores | undefined;
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    Object.assign(URL, { createObjectURL: vi.fn().mockReturnValue("blob:mock-url"), revokeObjectURL: vi.fn() });
+
+    render(
+      <AppStoresProvider databaseName={`test-materials-csv-${Math.random()}`}>
+        <StoresCapture
+          onReady={(s) => {
+            stores = s;
+          }}
+        />
+        <MaterialsTab templates={[template]} palletProfiles={[palletProfile]} />
+      </AppStoresProvider>,
+    );
+
+    await waitFor(() => expect(stores).toBeDefined());
+    expect(screen.getByRole("button", { name: /export csv/i })).toBeDisabled();
+
+    act(() => {
+      stores!.layoutStore.getState().loadLayout("layout-1" as never, {});
+      stores!.layoutStore.getState().upsertRackInstance(makeInstance(5));
+    });
+
+    await waitFor(() => expect(screen.getByRole("button", { name: /export csv/i })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: /export csv/i }));
+
+    await waitFor(() => expect(clickSpy).toHaveBeenCalled());
+  });
+
   it("shows no materials before any instance exists, populates after one is added, and updates again after it's removed — all without remounting", async () => {
     let stores: AppStores | undefined;
 

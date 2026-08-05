@@ -13,6 +13,7 @@
 
 import { useMemo, useState } from "react";
 import { computeZoneMembership } from "@rack-app/canvas";
+import { exportMaterialsCsv } from "@rack-app/export";
 import type { EntityId, PalletProfile, RackInstance, RackTemplate } from "@rack-app/state";
 import { useLayoutStore, useUiPreferencesStore } from "../app/stores.js";
 import { computeInstanceBounds } from "../app/instanceGeometry.js";
@@ -33,6 +34,7 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
   const defaultAnchorsPerUpright = useUiPreferencesStore((state) => state.defaultAnchorsPerUpright);
 
   const [scope, setScope] = useState<Scope>("all");
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const scopedInstances = useMemo((): readonly RackInstance[] => {
     const allInstances = Array.from(rackInstances.values());
@@ -65,6 +67,14 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
     return buildMaterialLineItems(results);
   }, [scopedInstances, templates, palletProfiles, defaultAnchorsPerUpright, protectorPlacements]);
 
+  async function handleExportCsv(): Promise<void> {
+    setExportError(null);
+    const result = await exportMaterialsCsv(lineItems);
+    if (result.kind === "error" && result.code !== "SAVE_FILE_CANCELLED") {
+      setExportError(result.message);
+    }
+  }
+
   return (
     <div style={{ padding: 16 }}>
       <label>
@@ -78,7 +88,11 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
             </option>
           ))}
         </select>
-      </label>
+      </label>{" "}
+      <button type="button" onClick={() => void handleExportCsv()} disabled={lineItems.length === 0}>
+        Export CSV
+      </button>
+      {exportError !== null && <p style={{ color: "crimson" }}>{exportError}</p>}
 
       <table style={{ marginTop: 12, borderCollapse: "collapse", width: "100%", maxWidth: 480 }}>
         <thead>

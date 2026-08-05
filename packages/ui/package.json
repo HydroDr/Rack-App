@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@rack-app/canvas": "workspace:*",
+    "@rack-app/export": "workspace:*",
+    "@rack-app/import": "workspace:*",
     "@rack-app/rules-engine": "workspace:*",
     "@rack-app/state": "workspace:*",
     "pixi.js": "^8.6.1",
