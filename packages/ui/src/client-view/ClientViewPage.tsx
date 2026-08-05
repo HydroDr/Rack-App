@@ -64,17 +64,29 @@ function ReadOnlyCanvas({
 
   useEffect(() => {
     let disposed = false;
+    let initialized = false;
     const app = new Application();
     const initOptions = containerRef.current === null ? { background: "#f4f5f7" } : { background: "#f4f5f7", resizeTo: containerRef.current };
     void app.init(initOptions).then(() => {
-      if (disposed || containerRef.current === null) return;
+      initialized = true;
+      // init() is async, so React StrictMode's mount->cleanup->remount cycle can call the
+      // cleanup below before this resolves — destroying a not-yet-initialized Application
+      // throws inside PixiJS (its resize teardown isn't set up yet), so if disposal already
+      // happened, destroy here instead, once it's actually safe to.
+      if (disposed) {
+        app.destroy(true, { children: true });
+        return;
+      }
+      if (containerRef.current === null) return;
       containerRef.current.appendChild(app.canvas);
       appRef.current = app;
     });
     return () => {
       disposed = true;
       appRef.current = null;
-      app.destroy(true, { children: true });
+      if (initialized) {
+        app.destroy(true, { children: true });
+      }
     };
   }, []);
 

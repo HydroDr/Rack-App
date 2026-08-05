@@ -41,16 +41,28 @@ export function FrontViewCanvas({
 
   useEffect(() => {
     let disposed = false;
+    let initialized = false;
     const app = new Application();
     void app.init({ background: "#ffffff", width: CANVAS_WIDTH, height: CANVAS_HEIGHT }).then(() => {
-      if (disposed || containerRef.current === null) return;
+      initialized = true;
+      // init() is async, so React StrictMode's mount->cleanup->remount cycle can call the
+      // cleanup below before this resolves — destroying a not-yet-initialized Application
+      // throws inside PixiJS (its resize teardown isn't set up yet), so if disposal already
+      // happened, destroy here instead, once it's actually safe to.
+      if (disposed) {
+        app.destroy(true, { children: true });
+        return;
+      }
+      if (containerRef.current === null) return;
       containerRef.current.appendChild(app.canvas);
       appRef.current = app;
     });
     return () => {
       disposed = true;
       appRef.current = null;
-      app.destroy(true, { children: true });
+      if (initialized) {
+        app.destroy(true, { children: true });
+      }
     };
   }, []);
 

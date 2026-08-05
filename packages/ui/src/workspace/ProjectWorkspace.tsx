@@ -9,7 +9,20 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import type { Result } from "@rack-app/rules-engine";
-import type { BlockStackZone, EntityId, GroupLayer, PalletProfile, PathLane, ProtectorPlacement, RackInstance, RackTemplate, Variant, WarehouseElement, Zone } from "@rack-app/state";
+import {
+  createLayout,
+  type BlockStackZone,
+  type EntityId,
+  type GroupLayer,
+  type PalletProfile,
+  type PathLane,
+  type ProtectorPlacement,
+  type RackInstance,
+  type RackTemplate,
+  type Variant,
+  type WarehouseElement,
+  type Zone,
+} from "@rack-app/state";
 import { useAppStores, useLayoutStore, useProjectStore } from "../app/stores.js";
 import { CanvasTab } from "./CanvasTab.js";
 import { MaterialsTab } from "./MaterialsTab.js";
@@ -29,11 +42,12 @@ const TABS: readonly { id: TabId; label: string }[] = [
 
 export function ProjectWorkspace() {
   const { projectId } = useParams<{ projectId: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const layoutIdParam = searchParams.get("layout");
 
   const { repositories, layoutStore } = useAppStores();
   const allLayouts = useProjectStore((state) => state.layouts);
+  const upsertLayout = useProjectStore((state) => state.upsertLayout);
   const activeLayoutId = useLayoutStore((state) => state.layoutId);
 
   const [templates, setTemplates] = useState<readonly RackTemplate[]>([]);
@@ -59,6 +73,38 @@ export function ProjectWorkspace() {
     }
     void loadCatalog();
   }, [repositories]);
+
+  useEffect(() => {
+    if (projectId === undefined) return;
+    async function loadLayouts(): Promise<void> {
+      const result = await repositories.layouts.list();
+      if (result.kind === "error") return;
+      for (const layout of result.value) {
+        if (layout.projectId === projectId) upsertLayout(layout);
+      }
+    }
+    void loadLayouts();
+  }, [repositories, projectId, upsertLayout]);
+
+  async function handleNewLayout(): Promise<void> {
+    if (projectId === undefined) return;
+    const name = window.prompt("Layout name?");
+    if (name === null || name.trim() === "") return;
+
+    const result = createLayout({ projectId: projectId as EntityId, name });
+    if (result.kind === "error") {
+      window.alert(result.message);
+      return;
+    }
+
+    const saveResult = await repositories.layouts.save(result.value);
+    if (saveResult.kind === "error") {
+      window.alert(saveResult.message);
+      return;
+    }
+
+    upsertLayout(result.value);
+  }
 
   useEffect(() => {
     const targetLayoutId = (layoutIdParam ?? layouts[0]?.id) as EntityId | undefined;
@@ -122,20 +168,43 @@ export function ProjectWorkspace() {
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => setIsSharePanelOpen(true)}>
-          Share
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {layouts.length > 0 && (
+            <select
+              value={layoutIdParam ?? activeLayoutId ?? ""}
+              onChange={(event) => setSearchParams({ layout: event.target.value })}
+            >
+              {layouts.map((layout) => (
+                <option key={layout.id} value={layout.id}>
+                  {layout.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <button type="button" onClick={() => void handleNewLayout()}>
+            + New Layout
+          </button>
+          <button type="button" onClick={() => setIsSharePanelOpen(true)}>
+            Share
+          </button>
+        </div>
       </nav>
 
-      <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
-        {activeTab === "canvas" && <CanvasTab templates={templates} variants={variants} palletProfiles={palletProfiles} />}
-        {activeTab === "materials" && <MaterialsTab templates={templates} palletProfiles={palletProfiles} />}
-        {activeTab === "compare" && activeLayoutId !== null && (
-          <CompareTab currentLayoutId={activeLayoutId} layouts={layouts} templates={templates} palletProfiles={palletProfiles} />
-        )}
-        {activeTab === "roi" && <RoiTab templates={templates} palletProfiles={palletProfiles} />}
-        {activeTab === "notes" && activeLayoutId !== null && <NotesTab projectId={projectId as EntityId} layoutId={activeLayoutId} />}
-      </div>
+      {layouts.length === 0 ? (
+        <p style={{ padding: 24, color: "var(--color-text-muted)" }}>
+          This project has no layouts yet — click "+ New Layout" above to create one before placing racks.
+        </p>
+      ) : (
+        <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+          {activeTab === "canvas" && <CanvasTab templates={templates} variants={variants} palletProfiles={palletProfiles} />}
+          {activeTab === "materials" && <MaterialsTab templates={templates} palletProfiles={palletProfiles} />}
+          {activeTab === "compare" && activeLayoutId !== null && (
+            <CompareTab currentLayoutId={activeLayoutId} layouts={layouts} templates={templates} palletProfiles={palletProfiles} />
+          )}
+          {activeTab === "roi" && <RoiTab templates={templates} palletProfiles={palletProfiles} />}
+          {activeTab === "notes" && activeLayoutId !== null && <NotesTab projectId={projectId as EntityId} layoutId={activeLayoutId} />}
+        </div>
+      )}
 
       {isSharePanelOpen && <SharePanel projectId={projectId as EntityId} layouts={layouts} onClose={() => setIsSharePanelOpen(false)} />}
     </div>

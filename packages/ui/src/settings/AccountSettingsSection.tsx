@@ -1,18 +1,32 @@
 /**
  * Toppling threshold display (read-only value, code-derived), variant
  * auto-promotion, toolbar prefs, drawing/display prefs, default
- * anchors-per-upright (Spec §6.5).
+ * anchors-per-upright (Spec §6.5), and DXF drawing-style import.
  *
  * The toppling threshold renders as a plain readout div, not any kind of
  * input/select/contentEditable element — there is no form control here a
  * user could type into. Keeps the hard-threshold decision (Spec §2.5)
  * from being undone by a UI that implies it's freely editable
  * (Engineering File Plan §6.6).
+ *
+ * DXF import here actually applies its result (unlike
+ * ProjectSettingsSection's read-only preview of the same parser): a
+ * layer's color is the only part of ImportedDrawingPreferences with a
+ * real uiPreferencesStore counterpart — gridColor/annotationColor/
+ * selectionHighlightColor are all colors, so the first, second, and
+ * third layers with a defined ACI color number map onto them in that
+ * order. Text styles/dimension styles/linetypes have no comparable
+ * existing preference field, so they're listed in the summary for
+ * visibility but not applied to anything.
  */
 
+import { useState } from "react";
 import { TOPPLING_RATIO_THRESHOLD } from "@rack-app/rules-engine";
+import { importDxfStylePreferences, type ImportedDrawingPreferences } from "@rack-app/import";
 import type { ToolbarPosition, UnitsPreference } from "@rack-app/state";
 import { useUiPreferencesStore } from "../app/stores.js";
+import { readFileAsText } from "../app/readFileAsText.js";
+import { aciToHex } from "./aciColor.js";
 
 export function AccountSettingsSection() {
   const units = useUiPreferencesStore((state) => state.units);
@@ -31,6 +45,47 @@ export function AccountSettingsSection() {
   const setDefaultAnchorsPerUpright = useUiPreferencesStore((state) => state.setDefaultAnchorsPerUpright);
   const variantAutoPromotion = useUiPreferencesStore((state) => state.variantAutoPromotion);
   const setVariantAutoPromotion = useUiPreferencesStore((state) => state.setVariantAutoPromotion);
+
+  const [dxfPreferences, setDxfPreferences] = useState<ImportedDrawingPreferences | null>(null);
+  const [dxfError, setDxfError] = useState<string | null>(null);
+  const [appliedColorCount, setAppliedColorCount] = useState(0);
+
+  async function handleDxfFileChange(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file === undefined) return;
+
+    setDxfError(null);
+    setDxfPreferences(null);
+    setAppliedColorCount(0);
+
+    let preferences: ImportedDrawingPreferences;
+    try {
+      const text = await readFileAsText(file);
+      const result = importDxfStylePreferences(text);
+      if (result.kind === "error") {
+        setDxfError(result.message);
+        return;
+      }
+      preferences = result.value;
+    } catch (cause) {
+      setDxfError(cause instanceof Error ? cause.message : "Failed to read the file.");
+      return;
+    }
+
+    setDxfPreferences(preferences);
+
+    const colorSetters = [setGridColor, setAnnotationColor, setSelectionHighlightColor];
+    let applied = 0;
+    for (const layer of preferences.layers) {
+      if (applied >= colorSetters.length) break;
+      const hex = aciToHex(layer.colorNumber);
+      if (hex === undefined) continue;
+      colorSetters[applied]!(hex);
+      applied += 1;
+    }
+    setAppliedColorCount(applied);
+  }
 
   return (
     <section style={{ maxWidth: 480 }}>
@@ -102,6 +157,25 @@ export function AccountSettingsSection() {
           Selection highlight:{" "}
           <input type="color" value={selectionHighlightColor} onChange={(event) => setSelectionHighlightColor(event.target.value)} />
         </label>
+      </fieldset>
+
+      <fieldset style={{ marginTop: 16 }}>
+        <legend>Import drawing settings from DXF</legend>
+        <input type="file" accept=".dxf" onChange={(event) => void handleDxfFileChange(event)} />
+        {dxfError !== null && <p style={{ color: "crimson" }}>{dxfError}</p>}
+        {dxfPreferences !== null && (
+          <div style={{ fontSize: 13 }}>
+            <p>
+              Applied {appliedColorCount} layer color{appliedColorCount === 1 ? "" : "s"} to Grid/Annotation/Selection-highlight above.
+            </p>
+            <ul>
+              <li>Layers: {dxfPreferences.layers.map((layer) => layer.name).join(", ") || "none"}</li>
+              <li>Text styles: {dxfPreferences.textStyles.map((style) => style.name).join(", ") || "none"}</li>
+              <li>Dimension styles: {dxfPreferences.dimStyles.map((style) => style.name).join(", ") || "none"}</li>
+              <li>Linetypes: {dxfPreferences.lineTypes.map((lineType) => lineType.name).join(", ") || "none"}</li>
+            </ul>
+          </div>
+        )}
       </fieldset>
     </section>
   );

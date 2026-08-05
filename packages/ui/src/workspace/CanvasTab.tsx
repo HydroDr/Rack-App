@@ -37,6 +37,7 @@ import { nowIsoTimestamp, type ComponentType, type EntityId, type GroupLayer, ty
 import { useAppStores, useHistoryStore, useLayoutStore, useUiPreferencesStore } from "../app/stores.js";
 import { computeInstanceBounds } from "../app/instanceGeometry.js";
 import { computeInstanceBom } from "./bomUtils.js";
+import { collectInstanceWarnings, type InstanceWarning } from "./warningsEngine.js";
 import { Toolbar, type SnapSettings, type ToolId } from "../canvas-ui/Toolbar.js";
 import { PropertiesPanel } from "../canvas-ui/PropertiesPanel.js";
 import { LayersGroupsPanel } from "../canvas-ui/LayersGroupsPanel.js";
@@ -73,6 +74,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const [pdfExportError, setPdfExportError] = useState<string | null>(null);
   const [zoneDragStart, setZoneDragStart] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
   const [zoneDragCurrent, setZoneDragCurrent] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
+  const [isWarningsPanelOpen, setIsWarningsPanelOpen] = useState(false);
 
   useEffect(() => {
     let disposed = false;
@@ -117,6 +119,16 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     }
     return inputs;
   }, [rackInstances, templates]);
+
+  const instanceWarnings = useMemo((): readonly InstanceWarning[] => {
+    const warnings: InstanceWarning[] = [];
+    for (const { instance, template, ratioDepthIn } of renderInputs) {
+      const palletProfile = palletProfiles.find((profile) => profile.id === template.palletProfileId);
+      if (palletProfile === undefined) continue;
+      warnings.push(...collectInstanceWarnings(instance, template, palletProfile, ratioDepthIn));
+    }
+    return warnings;
+  }, [renderInputs, palletProfiles]);
 
   useEffect(() => {
     const app = appRef.current;
@@ -261,12 +273,30 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     if (toolId === "mirror") handleMirror();
   }
 
-  /** Captures a static snapshot of what renderScene() already drew to the canvas — never re-implements rack drawing (Spec §6.3c, carried over from the Phase 4 review). */
+  /**
+   * Captures a static snapshot of what renderScene() already drew to the
+   * canvas — never re-implements rack drawing (Spec §6.3c, carried over
+   * from the Phase 4 review). Goes through the renderer's extract system
+   * (renderer.extract.canvas(...).toDataURL()) rather than reading
+   * app.canvas directly: a raw WebGL canvas's own toDataURL() can return a
+   * blank image unless the context was created with preserveDrawingBuffer,
+   * which this app doesn't set — extract.canvas() handles the readback
+   * correctly regardless of renderer backend.
+   */
   async function handleExportPdf(): Promise<void> {
     setPdfExportError(null);
-    const canvas = appRef.current?.canvas;
-    if (canvas === undefined) return;
-    const snapshot: CanvasSnapshot = { imageDataUrl: canvas.toDataURL("image/png"), widthPx: canvas.width, heightPx: canvas.height };
+    const app = appRef.current;
+    if (app === null) return;
+    const extractedCanvas = app.renderer.extract.canvas(app.stage);
+    if (extractedCanvas.toDataURL === undefined) {
+      setPdfExportError("This browser can't read back the canvas as an image.");
+      return;
+    }
+    const snapshot: CanvasSnapshot = {
+      imageDataUrl: extractedCanvas.toDataURL("image/png"),
+      widthPx: extractedCanvas.width,
+      heightPx: extractedCanvas.height,
+    };
     const result = await exportLayoutPdf(snapshot, "Rack Layout");
     if (result.kind === "error" && result.code !== "SAVE_FILE_CANCELLED") {
       setPdfExportError(result.message);
@@ -302,7 +332,30 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           Export PDF
         </button>
         {pdfExportError !== null && <span style={{ color: "crimson" }}>{pdfExportError}</span>}
+        {instanceWarnings.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setIsWarningsPanelOpen((open) => !open)}
+            style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 4, padding: "4px 10px" }}
+          >
+            ⚠ {instanceWarnings.length} warning{instanceWarnings.length === 1 ? "" : "s"}
+          </button>
+        )}
       </div>
+      {isWarningsPanelOpen && instanceWarnings.length > 0 && (
+        <div
+          role="alert"
+          style={{ padding: "8px 12px", background: "#fffbeb", borderBottom: "1px solid #f59e0b", maxHeight: 160, overflowY: "auto" }}
+        >
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13 }}>
+            {instanceWarnings.map((warning, index) => (
+              <li key={`${warning.instanceId}-${warning.code}-${index}`}>
+                <strong>{warning.code}:</strong> {warning.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <TemplatePanel
           templates={templates}

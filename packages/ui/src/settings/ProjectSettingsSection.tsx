@@ -13,16 +13,7 @@ import { useEffect, useState } from "react";
 import { importDxfStylePreferences, type ImportedDrawingPreferences } from "@rack-app/import";
 import type { EntityId, PalletProfile, Project, ProjectUnitsOverride, ProjectWallType } from "@rack-app/state";
 import { useAppStores, useProjectStore } from "../app/stores.js";
-
-/** Uses FileReader rather than File.prototype.text() — broader environment support for the same result. */
-function readFileAsText(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error ?? new Error("Failed to read the file."));
-    reader.readAsText(file);
-  });
-}
+import { readFileAsText } from "../app/readFileAsText.js";
 
 export interface ProjectSettingsSectionProps {
   readonly projectId: EntityId;
