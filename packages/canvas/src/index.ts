@@ -24,3 +24,4 @@ export * from "./interaction/placementTool.js";
 export * from "./interaction/arrayRepeatTool.js";
 export * from "./interaction/mirrorTool.js";
 export * from "./interaction/pathLaneTool.js";
+export * from "./interaction/zoneTool.js";

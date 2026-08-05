@@ -16,6 +16,7 @@ import { MaterialsTab } from "./MaterialsTab.js";
 import { CompareTab } from "./CompareTab.js";
 import { RoiTab } from "./RoiTab.js";
 import { NotesTab } from "./NotesTab.js";
+import { SharePanel } from "./SharePanel.js";
 
 type TabId = "canvas" | "materials" | "compare" | "roi" | "notes";
 const TABS: readonly { id: TabId; label: string }[] = [
@@ -39,6 +40,7 @@ export function ProjectWorkspace() {
   const [variants, setVariants] = useState<readonly Variant[]>([]);
   const [palletProfiles, setPalletProfiles] = useState<readonly PalletProfile[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>("canvas");
+  const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
 
   const layouts = allLayouts.filter((layout) => layout.projectId === projectId);
 
@@ -97,17 +99,32 @@ export function ProjectWorkspace() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <nav style={{ display: "flex", gap: 4, padding: "8px 16px", borderBottom: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            aria-pressed={activeTab === tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{ fontWeight: activeTab === tab.id ? 700 : 400, background: "none", border: "none", padding: "6px 10px", cursor: "pointer" }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <nav
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 4,
+          padding: "8px 16px",
+          borderBottom: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+        }}
+      >
+        <div style={{ display: "flex", gap: 4 }}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              aria-pressed={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{ fontWeight: activeTab === tab.id ? 700 : 400, background: "none", border: "none", padding: "6px 10px", cursor: "pointer" }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={() => setIsSharePanelOpen(true)}>
+          Share
+        </button>
       </nav>
 
       <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
@@ -119,6 +136,8 @@ export function ProjectWorkspace() {
         {activeTab === "roi" && <RoiTab templates={templates} palletProfiles={palletProfiles} />}
         {activeTab === "notes" && activeLayoutId !== null && <NotesTab projectId={projectId as EntityId} layoutId={activeLayoutId} />}
       </div>
+
+      {isSharePanelOpen && <SharePanel projectId={projectId as EntityId} layouts={layouts} onClose={() => setIsSharePanelOpen(false)} />}
     </div>
   );
 }

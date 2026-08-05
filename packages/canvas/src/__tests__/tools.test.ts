@@ -7,6 +7,7 @@ import { placeTemplate } from "../interaction/placementTool.js";
 import { applyArrayRepeat, MAX_REPEAT_COUNT } from "../interaction/arrayRepeatTool.js";
 import { mirrorSelection } from "../interaction/mirrorTool.js";
 import { createPathLaneTool } from "../interaction/pathLaneTool.js";
+import { drawZone, rectangleToZoneBoundary } from "../interaction/zoneTool.js";
 
 function makeInstance(overrides: Partial<RackInstance> = {}): RackInstance {
   const now = "2024-01-01T00:00:00.000Z";
@@ -233,5 +234,67 @@ describe("interaction/pathLaneTool.ts — Spec §6.3.1d", () => {
 
     historyStore.getState().undo();
     expect(layoutStore.getState().pathLanes.has(lane!.id)).toBe(false);
+  });
+});
+
+describe("interaction/zoneTool.ts — Spec §6.3.3", () => {
+  it("rectangleToZoneBoundary turns two opposite corners into a 4-point polygon", () => {
+    const boundary = rectangleToZoneBoundary({ xIn: fromInches(0), yIn: fromInches(0) }, { xIn: fromInches(100), yIn: fromInches(50) });
+    expect(boundary).toHaveLength(4);
+    expect(boundary.map((point) => [toInches(point.xIn), toInches(point.yIn)])).toEqual([
+      [0, 0],
+      [100, 0],
+      [100, 50],
+      [0, 50],
+    ]);
+  });
+
+  it("drawZone commits the zone as one undo-able Command", () => {
+    const layoutStore = createLayoutStore();
+    const historyStore = createHistoryStore();
+    layoutStore.getState().loadLayout("layout-1" as never, {});
+
+    const boundary = rectangleToZoneBoundary({ xIn: fromInches(0), yIn: fromInches(0) }, { xIn: fromInches(100), yIn: fromInches(50) });
+    const result = drawZone(layoutStore, historyStore, { name: "Fast-Movers", roiMode: "forwarding", boundary });
+
+    expect(result.kind).not.toBe("error");
+    if (result.kind === "error") throw new Error("unreachable");
+    expect(layoutStore.getState().zones.has(result.value.id)).toBe(true);
+    expect(historyStore.getState().past).toHaveLength(1);
+
+    historyStore.getState().undo();
+    expect(layoutStore.getState().zones.has(result.value.id)).toBe(false);
+  });
+
+  it("drawZone never touches groupLayers — Zones and Groups/Layers stay structurally separate", () => {
+    const layoutStore = createLayoutStore();
+    const historyStore = createHistoryStore();
+    layoutStore.getState().loadLayout("layout-1" as never, {});
+
+    const boundary = rectangleToZoneBoundary({ xIn: fromInches(0), yIn: fromInches(0) }, { xIn: fromInches(100), yIn: fromInches(50) });
+    drawZone(layoutStore, historyStore, { name: "Fast-Movers", roiMode: "forwarding", boundary });
+
+    expect(layoutStore.getState().groupLayers.size).toBe(0);
+  });
+
+  it("surfaces a validation error (empty name) as a Result instead of throwing, and commits nothing", () => {
+    const layoutStore = createLayoutStore();
+    const historyStore = createHistoryStore();
+    layoutStore.getState().loadLayout("layout-1" as never, {});
+
+    const boundary = rectangleToZoneBoundary({ xIn: fromInches(0), yIn: fromInches(0) }, { xIn: fromInches(100), yIn: fromInches(50) });
+    const result = drawZone(layoutStore, historyStore, { name: "", roiMode: "forwarding", boundary });
+
+    expect(result.kind).toBe("error");
+    expect(historyStore.getState().past).toHaveLength(0);
+    expect(layoutStore.getState().zones.size).toBe(0);
+  });
+
+  it("throws when no Layout is loaded, rather than silently drawing into nowhere", () => {
+    const layoutStore = createLayoutStore();
+    const historyStore = createHistoryStore();
+
+    const boundary = rectangleToZoneBoundary({ xIn: fromInches(0), yIn: fromInches(0) }, { xIn: fromInches(100), yIn: fromInches(50) });
+    expect(() => drawZone(layoutStore, historyStore, { name: "Fast-Movers", roiMode: "forwarding", boundary })).toThrow();
   });
 });

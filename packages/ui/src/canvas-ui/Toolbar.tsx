@@ -15,7 +15,7 @@ import { useUiPreferencesStore } from "../app/stores.js";
 import type { ToolbarPosition } from "@rack-app/state";
 
 export type ToolCategory = "selectionNavigation" | "drawingStructure" | "measurement" | "annotation";
-export type ToolId = "select" | "place" | "arrayRepeat" | "mirror" | "pathLane" | "wall" | "buildingColumn" | "dockDoor" | "door";
+export type ToolId = "select" | "place" | "arrayRepeat" | "mirror" | "pathLane" | "wall" | "buildingColumn" | "dockDoor" | "door" | "zone";
 
 interface ToolDefinition {
   readonly id: ToolId;
@@ -29,6 +29,7 @@ const TOOL_DEFINITIONS: readonly ToolDefinition[] = [
   { id: "arrayRepeat", label: "Array/Repeat", category: "drawingStructure" },
   { id: "mirror", label: "Mirror", category: "drawingStructure" },
   { id: "pathLane", label: "Path/Lane", category: "drawingStructure" },
+  { id: "zone", label: "Draw Zone", category: "drawingStructure" },
   { id: "wall", label: "Wall", category: "drawingStructure" },
   { id: "buildingColumn", label: "Building Column", category: "drawingStructure" },
   { id: "dockDoor", label: "Dock Door", category: "drawingStructure" },

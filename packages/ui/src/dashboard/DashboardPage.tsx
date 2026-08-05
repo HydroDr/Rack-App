@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createProject, type EntityId } from "@rack-app/state";
 import { useAppStores, useProjectStore } from "../app/stores.js";
+import { PalletProfileForm } from "../pallet-profiles/PalletProfileForm.js";
 import { ProjectCard } from "./ProjectCard.js";
 import { RecentProjectsRow } from "./RecentProjectsRow.js";
 
@@ -80,8 +81,9 @@ export function DashboardPage() {
       </header>
 
       <RecentProjectsRow projects={projects} layouts={layouts} />
-      <div style={{ marginTop: 12 }}>
+      <div style={{ marginTop: 12, display: "flex", alignItems: "flex-start", gap: 16 }}>
         <Link to="/templates/new">+ New Template</Link>
+        <PalletProfileForm onCreated={() => {}} />
       </div>
 
       <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>

@@ -22,8 +22,10 @@ import {
   commitCommand,
   createPathLaneTool,
   createUpsertCommand,
+  drawZone,
   mirrorSelection,
   placeTemplate,
+  rectangleToZoneBoundary,
   renderScene,
   selectAtPoint,
   type EntityCommandOps,
@@ -69,6 +71,8 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const [pathLaneBuilder, setPathLaneBuilder] = useState<ReturnType<typeof createPathLaneTool> | null>(null);
   const [snapSettings, setSnapSettings] = useState<SnapSettings>({ gridSnapEnabled: true, orthoModeEnabled: false, objectSnapEnabled: false });
   const [pdfExportError, setPdfExportError] = useState<string | null>(null);
+  const [zoneDragStart, setZoneDragStart] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
+  const [zoneDragCurrent, setZoneDragCurrent] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
 
   useEffect(() => {
     let disposed = false;
@@ -181,6 +185,43 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     }
   }
 
+  const MIN_ZONE_DRAG_IN = 12;
+
+  function handleCanvasMouseDown(event: React.MouseEvent<HTMLDivElement>): void {
+    if (activeToolId !== "zone") return;
+    const point = screenToWorldIn(event);
+    setZoneDragStart(point);
+    setZoneDragCurrent(point);
+  }
+
+  function handleCanvasMouseMove(event: React.MouseEvent<HTMLDivElement>): void {
+    if (activeToolId !== "zone" || zoneDragStart === null) return;
+    setZoneDragCurrent(screenToWorldIn(event));
+  }
+
+  function handleCanvasMouseUp(event: React.MouseEvent<HTMLDivElement>): void {
+    if (activeToolId !== "zone" || zoneDragStart === null) return;
+    const end = screenToWorldIn(event);
+    setZoneDragStart(null);
+    setZoneDragCurrent(null);
+
+    const widthIn = Math.abs(toInches(end.xIn) - toInches(zoneDragStart.xIn));
+    const heightIn = Math.abs(toInches(end.yIn) - toInches(zoneDragStart.yIn));
+    if (widthIn < MIN_ZONE_DRAG_IN || heightIn < MIN_ZONE_DRAG_IN) return;
+
+    const name = window.prompt("Zone name?");
+    if (name === null || name.trim() === "") return;
+    const roiModeInput = window.prompt('ROI mode: "forwarding" or "distribution"?', "forwarding");
+    if (roiModeInput === null) return;
+    const roiMode = roiModeInput.trim() === "distribution" ? "distribution" : "forwarding";
+
+    const boundary = rectangleToZoneBoundary(zoneDragStart, end);
+    const result = drawZone(layoutStore, historyStore, { name, roiMode, boundary });
+    if (result.kind === "error") {
+      window.alert(result.message);
+    }
+  }
+
   function handleArrayRepeat(): void {
     const [selectedId] = selectedIds;
     const instance = selectedId === undefined ? undefined : rackInstances.get(selectedId);
@@ -286,8 +327,27 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           ref={containerRef}
           onClick={handleCanvasClick}
           onDoubleClick={handleCanvasDoubleClick}
+          onMouseDown={handleCanvasMouseDown}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseUp={handleCanvasMouseUp}
           style={{ flex: 1, position: "relative", overflow: "hidden", background: "#f4f5f7" }}
-        />
+        >
+          {zoneDragStart !== null && zoneDragCurrent !== null && (
+            <div
+              data-testid="zone-drag-preview"
+              style={{
+                position: "absolute",
+                pointerEvents: "none",
+                border: "1px dashed #2684ff",
+                background: "rgba(38, 132, 255, 0.1)",
+                left: Math.min(toInches(zoneDragStart.xIn), toInches(zoneDragCurrent.xIn)) * PIXELS_PER_INCH,
+                top: Math.min(toInches(zoneDragStart.yIn), toInches(zoneDragCurrent.yIn)) * PIXELS_PER_INCH,
+                width: Math.abs(toInches(zoneDragCurrent.xIn) - toInches(zoneDragStart.xIn)) * PIXELS_PER_INCH,
+                height: Math.abs(toInches(zoneDragCurrent.yIn) - toInches(zoneDragStart.yIn)) * PIXELS_PER_INCH,
+              }}
+            />
+          )}
+        </div>
         <PropertiesPanel
           instance={selectedInstance}
           template={selectedTemplate}

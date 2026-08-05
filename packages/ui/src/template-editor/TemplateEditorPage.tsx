@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { fromInches } from "@rack-app/rules-engine";
 import { createRackTemplate, type ComponentColorMap, type EntityId, type PalletProfile } from "@rack-app/state";
 import { useAppStores } from "../app/stores.js";
+import { PalletProfileForm } from "../pallet-profiles/PalletProfileForm.js";
 import { FrontViewCanvas } from "./FrontViewCanvas.js";
 import { ComponentColorPicker } from "./ComponentColorPicker.js";
 
@@ -93,6 +94,15 @@ export function TemplateEditorPage() {
             ))}
           </select>
         </label>
+
+        <div style={{ marginBottom: 8 }}>
+          <PalletProfileForm
+            onCreated={(profile) => {
+              setPalletProfiles((current) => [...current, profile]);
+              setPalletProfileId(profile.id);
+            }}
+          />
+        </div>
 
         <fieldset style={{ marginBottom: 8 }}>
           <legend>Geometry (Spec §2.3)</legend>
