@@ -1,0 +1,22 @@
+{
+  "name": "@rack-app/import",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@rack-app/data": "workspace:*",
+    "@rack-app/rules-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
