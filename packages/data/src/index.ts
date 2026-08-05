@@ -25,6 +25,7 @@ export * from "./models/roiScenario.js";
 export * from "./models/shareLink.js";
 export * from "./models/feedback.js";
 export * from "./models/noteAttachment.js";
+export * from "./models/protectorPlacement.js";
 
 export * from "./repository/repositoryInterface.js";
 export * from "./repository/projectRepository.js";

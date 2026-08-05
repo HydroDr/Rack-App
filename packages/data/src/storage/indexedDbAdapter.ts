@@ -26,6 +26,7 @@ export class RackAppDatabase extends Dexie {
   shareLinks!: Table<unknown, EntityId>;
   feedback!: Table<unknown, EntityId>;
   noteAttachments!: Table<unknown, EntityId>;
+  protectorPlacements!: Table<unknown, EntityId>;
 
   constructor(name = "rack-app") {
     super(name);
@@ -45,6 +46,7 @@ export class RackAppDatabase extends Dexie {
       shareLinks: "id, projectId",
       feedback: "id, layoutId, shareLinkId",
       noteAttachments: "id, projectId, layoutId",
+      protectorPlacements: "id, layoutId, rackInstanceId",
     });
   }
 }
