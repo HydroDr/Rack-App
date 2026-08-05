@@ -5,16 +5,13 @@
  * themselves (Spec §2.5, §2.6, §3.1c), only wires their existing
  * outputs to something the Canvas tab can render.
  *
- * Known gap, flagged rather than silently assumed: beamSelection's
- * "too close to margin" warning needs a capacityMarginLb, which is
- * only ever an optional per-template override today — no account-level
- * default field exists yet (the Template Editor doesn't even expose
- * the override), so the account-default tier here is 0 lb (no extra
- * margin required beyond meeting the rated capacity), meaning that
- * specific soft warning is effectively dormant until a template sets
- * its own value. The hard "exceeds every available rating" error from
- * selectBeam() is still surfaced regardless, since that's a genuine
- * capacity problem, not a margin preference.
+ * beamSelection's "too close to margin" warning resolves its
+ * capacityMarginLb the same account-default -> template-override chain
+ * bomUtils.ts uses for anchorsPerUpright (Phase 7 — previously this was
+ * always 0, making that specific warning dormant). The hard "exceeds
+ * every available rating" error from selectBeam() is still surfaced
+ * regardless of margin, since that's a genuine capacity problem, not a
+ * margin preference.
  */
 
 import {
@@ -41,6 +38,7 @@ export function collectInstanceWarnings(
   template: RackTemplate,
   palletProfile: PalletProfile,
   ratioDepthIn: Length,
+  defaultCapacityMarginLb: number,
 ): readonly InstanceWarning[] {
   const collector = new WarningCollector();
 
@@ -70,7 +68,7 @@ export function collectInstanceWarnings(
 
   const palletsPerLevel = Math.max(1, Math.floor(beamLengthIn / toInches(palletProfile.widthIn)));
   const requiredWeightLb = palletsPerLevel * palletProfile.weightLb;
-  const marginLb = resolveAccountOrTemplate(weightLb(0), template.capacityMarginLb);
+  const marginLb = resolveAccountOrTemplate(weightLb(defaultCapacityMarginLb), template.capacityMarginLb);
   const beamResult = selectBeam(interlakeDefaultCatalog, beamLengthIn, requiredWeightLb, marginLb);
 
   if (beamResult.kind === "error") {

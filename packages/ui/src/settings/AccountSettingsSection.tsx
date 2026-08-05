@@ -43,6 +43,8 @@ export function AccountSettingsSection() {
   const setSelectionHighlightColor = useUiPreferencesStore((state) => state.setSelectionHighlightColor);
   const defaultAnchorsPerUpright = useUiPreferencesStore((state) => state.defaultAnchorsPerUpright);
   const setDefaultAnchorsPerUpright = useUiPreferencesStore((state) => state.setDefaultAnchorsPerUpright);
+  const defaultCapacityMarginLb = useUiPreferencesStore((state) => state.defaultCapacityMarginLb);
+  const setDefaultCapacityMarginLb = useUiPreferencesStore((state) => state.setDefaultCapacityMarginLb);
   const variantAutoPromotion = useUiPreferencesStore((state) => state.variantAutoPromotion);
   const setVariantAutoPromotion = useUiPreferencesStore((state) => state.setVariantAutoPromotion);
 
@@ -113,6 +115,16 @@ export function AccountSettingsSection() {
           min={1}
           value={defaultAnchorsPerUpright}
           onChange={(event) => setDefaultAnchorsPerUpright(Number(event.target.value))}
+        />
+      </label>
+
+      <label style={{ display: "block", marginBottom: 8 }}>
+        Default beam-capacity margin (lb):{" "}
+        <input
+          type="number"
+          min={0}
+          value={defaultCapacityMarginLb}
+          onChange={(event) => setDefaultCapacityMarginLb(Number(event.target.value))}
         />
       </label>
 

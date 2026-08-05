@@ -85,6 +85,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const selectedIds = useLayoutStore((state) => state.selectedIds);
   const gridColor = useUiPreferencesStore((state) => state.gridColor);
   const defaultAnchorsPerUpright = useUiPreferencesStore((state) => state.defaultAnchorsPerUpright);
+  const defaultCapacityMarginLb = useUiPreferencesStore((state) => state.defaultCapacityMarginLb);
   void useHistoryStore((state) => state.past.length); // re-render after undo/redo changes committed state
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -204,10 +205,10 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     for (const { instance, template, ratioDepthIn } of renderInputs) {
       const palletProfile = palletProfiles.find((profile) => profile.id === template.palletProfileId);
       if (palletProfile === undefined) continue;
-      warnings.push(...collectInstanceWarnings(instance, template, palletProfile, ratioDepthIn));
+      warnings.push(...collectInstanceWarnings(instance, template, palletProfile, ratioDepthIn, defaultCapacityMarginLb));
     }
     return warnings;
-  }, [renderInputs, palletProfiles]);
+  }, [renderInputs, palletProfiles, defaultCapacityMarginLb]);
 
   useEffect(() => {
     const app = appRef.current;

@@ -27,6 +27,8 @@ export interface UiPreferencesState {
   readonly selectionHighlightColor: string;
   /** Pre-fills new templates (Spec §3.1, §6.5); still overridable per template. */
   readonly defaultAnchorsPerUpright: number;
+  /** Account-default beam-capacity safety margin, lb (Spec §3.1c); overridable per template via RackTemplate.capacityMarginLb. */
+  readonly defaultCapacityMarginLb: number;
   readonly variantAutoPromotion: boolean;
 }
 
@@ -43,6 +45,7 @@ export interface UiPreferencesActions {
   setAnnotationColor(color: string): void;
   setSelectionHighlightColor(color: string): void;
   setDefaultAnchorsPerUpright(count: number): void;
+  setDefaultCapacityMarginLb(marginLb: number): void;
   setVariantAutoPromotion(enabled: boolean): void;
 }
 
@@ -58,6 +61,7 @@ const DEFAULT_STATE: UiPreferencesState = {
   annotationColor: "#000000",
   selectionHighlightColor: "#2684ff",
   defaultAnchorsPerUpright: 3,
+  defaultCapacityMarginLb: 300,
   variantAutoPromotion: false,
 };
 
@@ -101,6 +105,8 @@ export function createUiPreferencesStore(overrides: Partial<UiPreferencesState> 
     setSelectionHighlightColor: (selectionHighlightColor) => set({ selectionHighlightColor }),
 
     setDefaultAnchorsPerUpright: (defaultAnchorsPerUpright) => set({ defaultAnchorsPerUpright }),
+
+    setDefaultCapacityMarginLb: (defaultCapacityMarginLb) => set({ defaultCapacityMarginLb }),
 
     setVariantAutoPromotion: (variantAutoPromotion) => set({ variantAutoPromotion }),
   }));

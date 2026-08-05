@@ -66,7 +66,7 @@ describe("warningsEngine.ts — wires rules-engine checks into a per-instance wa
     const template = makeTemplate(palletProfile.id);
     const instance = makeInstance(template.id);
 
-    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn);
+    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn, 0);
     expect(warnings).toHaveLength(0);
   });
 
@@ -77,7 +77,7 @@ describe("warningsEngine.ts — wires rules-engine checks into a per-instance wa
     const template = makeTemplate(palletProfile.id, { palletLevels: 6, palletHeightIn: fromInches(60), clearanceIn: fromInches(6) });
     const instance = makeInstance(template.id);
 
-    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn);
+    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn, 0);
     const codes = warnings.map((warning) => warning.code);
     expect(codes).toContain("TOPPLING_RATIO_EXCEEDS_THRESHOLD");
     expect(codes).toContain("CROSS_AISLE_TIES_REQUIRED");
@@ -89,7 +89,7 @@ describe("warningsEngine.ts — wires rules-engine checks into a per-instance wa
     const template = makeTemplate(palletProfile.id, { palletLevels: 6, palletHeightIn: fromInches(60), clearanceIn: fromInches(6) });
     const instance = makeInstance(template.id, { anchoredOrBracedException: true });
 
-    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn);
+    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn, 0);
     const codes = warnings.map((warning) => warning.code);
     expect(codes).not.toContain("TOPPLING_RATIO_EXCEEDS_THRESHOLD");
     expect(codes).toContain("CROSS_AISLE_TIES_REQUIRED");
@@ -102,8 +102,40 @@ describe("warningsEngine.ts — wires rules-engine checks into a per-instance wa
     const template = makeTemplate(palletProfile.id);
     const instance = makeInstance(template.id);
 
-    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn);
+    const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn, 0);
     const codes = warnings.map((warning) => warning.code);
     expect(codes).toContain("CATALOG_EXCEEDS_MAX_RATING");
+  });
+
+  describe("beam-capacity margin resolution (Spec §3.1c, Phase 7)", () => {
+    // 2 pallets/level (96in beam / 48in-wide pallet) at 1900 lb each = 3800 lb required.
+    // The smallest 96in-span rating that covers 3800 lb is 27E at 3990 lb — a 190 lb margin.
+    function makeCloseToMarginFixtures() {
+      const palletProfile = makePalletProfile({ weightLb: 1900 as never });
+      const template = makeTemplate(palletProfile.id);
+      const instance = makeInstance(template.id);
+      return { palletProfile, template, instance };
+    }
+
+    it("account default margin above the actual 190 lb margin triggers the too-close warning", () => {
+      const { palletProfile, template, instance } = makeCloseToMarginFixtures();
+      const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn, 300);
+      expect(warnings.map((warning) => warning.code)).toContain("BEAM_CAPACITY_TOO_CLOSE_TO_MARGIN");
+    });
+
+    it("account default margin below the actual 190 lb margin does not trigger it", () => {
+      const { palletProfile, template, instance } = makeCloseToMarginFixtures();
+      const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn, 100);
+      expect(warnings.map((warning) => warning.code)).not.toContain("BEAM_CAPACITY_TOO_CLOSE_TO_MARGIN");
+    });
+
+    it("a template-level capacityMarginLb override wins over the account default", () => {
+      const { palletProfile, instance: _unused, template: baseTemplate } = makeCloseToMarginFixtures();
+      const template = { ...baseTemplate, capacityMarginLb: 0 as never };
+      const instance = makeInstance(template.id);
+      // Account default (300) would trigger the warning, but the template explicitly overrides to 0.
+      const warnings = collectInstanceWarnings(instance, template, palletProfile, template.frameDepthIn, 300);
+      expect(warnings.map((warning) => warning.code)).not.toContain("BEAM_CAPACITY_TOO_CLOSE_TO_MARGIN");
+    });
   });
 });
