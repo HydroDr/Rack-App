@@ -75,47 +75,85 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
     }
   }
 
-  return (
-    <div style={{ padding: 16 }}>
-      <label>
-        Area:{" "}
-        <select value={scope} onChange={(event) => setScope(event.target.value as Scope)}>
-          <option value="all">All</option>
-          <option value="selection">Current Selection ({selectedIds.size})</option>
-          {Array.from(zones.values()).map((zone) => (
-            <option key={zone.id} value={zone.id}>
-              Zone: {zone.name}
-            </option>
-          ))}
-        </select>
-      </label>{" "}
-      <button type="button" onClick={() => void handleExportCsv()} disabled={lineItems.length === 0}>
-        Export CSV
-      </button>
-      {exportError !== null && <p style={{ color: "crimson" }}>{exportError}</p>}
+  const totalPieces = lineItems.reduce((sum, item) => sum + item.quantity, 0);
 
-      <table style={{ marginTop: 12, borderCollapse: "collapse", width: "100%", maxWidth: 480 }}>
+  return (
+    <div style={{ padding: "var(--space-lg)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-md)", marginBottom: "var(--space-md)" }}>
+        <label style={{ fontSize: 13 }}>
+          Area:{" "}
+          <select value={scope} onChange={(event) => setScope(event.target.value as Scope)}>
+            <option value="all">All</option>
+            <option value="selection">Current Selection ({selectedIds.size})</option>
+            {Array.from(zones.values()).map((zone) => (
+              <option key={zone.id} value={zone.id}>
+                Zone: {zone.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" onClick={() => void handleExportCsv()} disabled={lineItems.length === 0}>
+          Export CSV
+        </button>
+        {exportError !== null && <span style={{ color: "var(--color-danger)", fontSize: 13 }}>{exportError}</span>}
+      </div>
+
+      <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 480, fontSize: 14 }}>
         <thead>
           <tr>
-            <th style={{ textAlign: "left", borderBottom: "1px solid var(--color-border)", padding: "4px 8px" }}>Material</th>
-            <th style={{ textAlign: "right", borderBottom: "1px solid var(--color-border)", padding: "4px 8px" }}>Qty</th>
+            <th
+              style={{
+                textAlign: "left",
+                borderBottom: "2px solid var(--color-border)",
+                padding: "6px 8px",
+                color: "var(--color-text-muted)",
+                fontSize: 12,
+                textTransform: "uppercase",
+                letterSpacing: 0.3,
+              }}
+            >
+              Material
+            </th>
+            <th
+              style={{
+                textAlign: "right",
+                borderBottom: "2px solid var(--color-border)",
+                padding: "6px 8px",
+                color: "var(--color-text-muted)",
+                fontSize: 12,
+                textTransform: "uppercase",
+                letterSpacing: 0.3,
+              }}
+            >
+              Qty
+            </th>
           </tr>
         </thead>
         <tbody>
           {lineItems.length === 0 && (
             <tr>
-              <td colSpan={2} style={{ padding: "8px", color: "var(--color-text-muted)" }}>
+              <td colSpan={2} style={{ padding: "var(--space-sm)", color: "var(--color-text-muted)" }}>
                 No materials in this area yet.
               </td>
             </tr>
           )}
-          {lineItems.map((item) => (
-            <tr key={item.material}>
-              <td style={{ padding: "4px 8px" }}>{item.material}</td>
-              <td style={{ padding: "4px 8px", textAlign: "right" }}>{item.quantity}</td>
+          {lineItems.map((item, index) => (
+            <tr key={item.material} style={{ background: index % 2 === 0 ? "var(--color-surface)" : "var(--color-surface-alt)" }}>
+              <td style={{ padding: "6px 8px" }}>{item.material}</td>
+              <td style={{ padding: "6px 8px", textAlign: "right" }}>{item.quantity.toLocaleString()}</td>
             </tr>
           ))}
         </tbody>
+        {lineItems.length > 0 && (
+          <tfoot>
+            <tr>
+              <td style={{ padding: "6px 8px", fontWeight: 700, borderTop: "2px solid var(--color-border)" }}>Total pieces</td>
+              <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, borderTop: "2px solid var(--color-border)" }}>
+                {totalPieces.toLocaleString()}
+              </td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   );

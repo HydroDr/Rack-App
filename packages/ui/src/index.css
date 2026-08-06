@@ -3,12 +3,23 @@
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   --color-bg: #f4f5f7;
   --color-surface: #ffffff;
+  --color-surface-alt: #f8f9fb;
   --color-border: #d7dbe0;
   --color-text: #1f2430;
   --color-text-muted: #6b7280;
   --color-accent: #2684ff;
+  --color-accent-bg: #e8f1ff;
   --color-warning: #b45309;
   --color-warning-bg: #fef3c7;
+  --color-warning-border: #f59e0b;
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fee2e2;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --radius: 6px;
 }
 
 * {
@@ -23,4 +34,9 @@ body {
 
 button {
   font-family: inherit;
+  cursor: pointer;
+}
+
+table {
+  font-variant-numeric: tabular-nums;
 }

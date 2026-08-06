@@ -4,7 +4,7 @@
  * with sort and grid/list-toggle controls.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createProject, type EntityId } from "@rack-app/state";
 import { useAppStores, useProjectStore } from "../app/stores.js";
@@ -65,29 +65,67 @@ export function DashboardPage() {
     navigate(`/projects/${result.value.id}`);
   }
 
+  const viewModeButtonStyle = (isActive: boolean): CSSProperties => ({
+    padding: "6px 14px",
+    border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
+    background: isActive ? "var(--color-accent-bg)" : "var(--color-surface)",
+    color: isActive ? "var(--color-accent)" : "var(--color-text)",
+    fontWeight: isActive ? 600 : 400,
+  });
+
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+    <div style={{ padding: "var(--space-xl)", maxWidth: 1200, margin: "0 auto" }}>
+      <h1 style={{ fontSize: 22, marginTop: 0, marginBottom: "var(--space-lg)" }}>Rack-App</h1>
+
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-lg)" }}>
         <input
           type="search"
           placeholder="Search projects or clients..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          style={{ flex: 1, maxWidth: 360, padding: "8px 10px", border: "1px solid var(--color-border)", borderRadius: 6 }}
+          style={{
+            flex: 1,
+            maxWidth: 360,
+            padding: "8px 10px",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius)",
+            fontSize: 14,
+          }}
         />
-        <button onClick={() => void handleNewProject()} style={{ padding: "8px 14px", borderRadius: 6, background: "var(--color-accent)", color: "white", border: "none" }}>
+        <button
+          onClick={() => void handleNewProject()}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "var(--radius)",
+            background: "var(--color-accent)",
+            color: "white",
+            border: "none",
+            fontWeight: 600,
+          }}
+        >
           + New Project
         </button>
       </header>
 
       <RecentProjectsRow projects={projects} layouts={layouts} />
-      <div style={{ marginTop: 12, display: "flex", alignItems: "flex-start", gap: 16 }}>
-        <Link to="/templates/new">+ New Template</Link>
+      <div style={{ marginTop: "var(--space-md)", display: "flex", alignItems: "center", gap: "var(--space-lg)", fontSize: 14 }}>
+        <Link to="/templates/new" style={{ color: "var(--color-accent)" }}>
+          + New Template
+        </Link>
         <PalletProfileForm onCreated={() => {}} />
       </div>
 
-      <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <label>
+      <div
+        style={{
+          marginTop: "var(--space-xl)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingBottom: "var(--space-sm)",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        <label style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
           Sort by:{" "}
           <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
             <option value="recentlyEdited">Recently edited</option>
@@ -95,11 +133,11 @@ export function DashboardPage() {
             <option value="dateCreated">Date created</option>
           </select>
         </label>
-        <div role="group" aria-label="View mode">
-          <button aria-pressed={viewMode === "grid"} onClick={() => setViewMode("grid")}>
+        <div role="group" aria-label="View mode" style={{ display: "flex", borderRadius: "var(--radius)", overflow: "hidden" }}>
+          <button aria-pressed={viewMode === "grid"} onClick={() => setViewMode("grid")} style={viewModeButtonStyle(viewMode === "grid")}>
             Grid
           </button>
-          <button aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>
+          <button aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")} style={viewModeButtonStyle(viewMode === "list")}>
             List
           </button>
         </div>
@@ -108,8 +146,8 @@ export function DashboardPage() {
       <div
         style={
           viewMode === "grid"
-            ? { marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }
-            : { marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }
+            ? { marginTop: "var(--space-lg)", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "var(--space-lg)" }
+            : { marginTop: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }
         }
       >
         {visibleProjects.length === 0 && <p style={{ color: "var(--color-text-muted)" }}>No projects yet — create one to get started.</p>}

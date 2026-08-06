@@ -19,7 +19,7 @@
  * picking on the canvas itself if that granularity turns out to matter.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { CONFIGURATION_TYPES, type ConfigurationType } from "@rack-app/rules-engine";
 import {
   getVariantDisplayName,
@@ -69,9 +69,33 @@ export function PropertiesPanel({
     }
   }, [instance?.id]);
 
+  const fieldsetStyle: CSSProperties = {
+    marginTop: "var(--space-md)",
+    marginBottom: 0,
+    padding: "var(--space-sm) var(--space-md) var(--space-md)",
+    border: "1px solid var(--color-border)",
+    borderRadius: "var(--radius)",
+    background: "var(--color-surface-alt)",
+  };
+  const legendStyle: CSSProperties = {
+    padding: "0 4px",
+    fontSize: 11,
+    fontWeight: 600,
+    color: "var(--color-text-muted)",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  };
+
   if (instance === null || template === null) {
     return (
-      <aside style={{ width: 260, padding: 12, borderLeft: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+      <aside
+        style={{
+          width: 260,
+          padding: "var(--space-md)",
+          borderLeft: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+        }}
+      >
         <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>No selection.</p>
       </aside>
     );
@@ -86,14 +110,36 @@ export function PropertiesPanel({
   const columnProtectorCount = protectorPlacement?.columnProtectorUprightIndices.length ?? 0;
 
   return (
-    <aside style={{ width: 260, padding: 12, borderLeft: "1px solid var(--color-border)", background: "var(--color-surface)", overflowY: "auto" }}>
-      <h3 style={{ marginTop: 0 }}>{variant !== null ? getVariantDisplayName(template, variant) : template.name}</h3>
+    <aside
+      style={{
+        width: 260,
+        padding: "var(--space-md)",
+        borderLeft: "1px solid var(--color-border)",
+        background: "var(--color-surface)",
+        overflowY: "auto",
+        fontSize: 13,
+      }}
+    >
+      <h3 style={{ marginTop: 0, marginBottom: "var(--space-md)", fontSize: 15 }}>
+        {variant !== null ? getVariantDisplayName(template, variant) : template.name}
+      </h3>
 
-      <div style={{ aspectRatio: "4 / 3", background: "#e9ebee", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+      <div
+        style={{
+          aspectRatio: "4 / 3",
+          background: "var(--color-surface-alt)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "var(--space-md)",
+        }}
+      >
         <span style={{ fontSize: 11, color: "var(--color-text-muted)" }}>Front-view thumbnail</span>
       </div>
 
-      <label style={{ display: "block", marginBottom: 8 }}>
+      <label style={{ display: "block", marginBottom: "var(--space-sm)" }}>
         Bays:{" "}
         <input
           type="number"
@@ -107,12 +153,12 @@ export function PropertiesPanel({
         />
       </label>
 
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: "var(--space-sm)", color: "var(--color-text-muted)" }}>
         Levels: {template.palletLevels} &nbsp;|&nbsp; PPO: {ppo ?? "—"}
       </div>
 
-      <fieldset style={{ marginBottom: 8 }}>
-        <legend>Configuration</legend>
+      <fieldset style={fieldsetStyle}>
+        <legend style={legendStyle}>Configuration</legend>
         <select value={pendingConfigType} onChange={(event) => setPendingConfigType(event.target.value as ConfigurationType)}>
           {CONFIGURATION_TYPES.map((type) => (
             <option key={type} value={type}>
@@ -120,7 +166,7 @@ export function PropertiesPanel({
             </option>
           ))}
         </select>
-        <label style={{ display: "block", marginTop: 6 }}>
+        <label style={{ display: "block", marginTop: "var(--space-sm)" }}>
           Rack columns:{" "}
           <input
             type="number"
@@ -134,16 +180,16 @@ export function PropertiesPanel({
         <button
           disabled={!hasPendingConfigChange}
           onClick={() => onRecomputeConfiguration({ configurationType: pendingConfigType, rackColumns: pendingColumns })}
-          style={{ marginTop: 6 }}
+          style={{ marginTop: "var(--space-sm)" }}
         >
           Recompute
         </button>
       </fieldset>
 
-      <fieldset>
-        <legend>Component color</legend>
+      <fieldset style={fieldsetStyle}>
+        <legend style={legendStyle}>Component color</legend>
         {COMPONENT_TYPES.map((component) => (
-          <label key={component} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <label key={component} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-xs)" }}>
             {component}
             <input
               type="color"
@@ -154,10 +200,10 @@ export function PropertiesPanel({
         ))}
       </fieldset>
 
-      <fieldset style={{ marginTop: 8 }}>
-        <legend>Protectors</legend>
+      <fieldset style={fieldsetStyle}>
+        <legend style={legendStyle}>Protectors</legend>
         {lineEndProtectors.map((flags, lineIndex) => (
-          <div key={lineIndex} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, fontSize: 13 }}>
+          <div key={lineIndex} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
             <span>Line {lineIndex + 1}:</span>
             <label>
               <input
@@ -177,7 +223,7 @@ export function PropertiesPanel({
             </label>
           </div>
         ))}
-        <label style={{ display: "block", marginTop: 6 }}>
+        <label style={{ display: "block", marginTop: "var(--space-sm)" }}>
           Column protectors (uprights):{" "}
           <input
             type="number"

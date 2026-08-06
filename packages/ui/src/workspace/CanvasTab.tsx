@@ -85,6 +85,10 @@ function isEditableElement(element: Element | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (element as HTMLElement).isContentEditable;
 }
 
+function warningKey(warning: InstanceWarning): string {
+  return `${warning.instanceId}::${warning.code}`;
+}
+
 export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProps) {
   const navigate = useNavigate();
   const { layoutStore, historyStore } = useAppStores();
@@ -111,6 +115,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const [zoneDragStart, setZoneDragStart] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
   const [zoneDragCurrent, setZoneDragCurrent] = useState<{ xIn: ReturnType<typeof fromInches>; yIn: ReturnType<typeof fromInches> } | null>(null);
   const [isWarningsPanelOpen, setIsWarningsPanelOpen] = useState(false);
+  const [dismissedWarningKeys, setDismissedWarningKeys] = useState<ReadonlySet<string>>(new Set());
 
   const [viewTransform, setViewTransform] = useState<ViewTransform>({ zoom: 1, panX: 0, panY: 0 });
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -220,6 +225,11 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     }
     return warnings;
   }, [renderInputs, palletProfiles, defaultCapacityMarginLb]);
+
+  const visibleWarnings = useMemo(
+    () => instanceWarnings.filter((warning) => !dismissedWarningKeys.has(warningKey(warning))),
+    [instanceWarnings, dismissedWarningKeys],
+  );
 
   useEffect(() => {
     const app = appRef.current;
@@ -511,30 +521,50 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
         <button type="button" onClick={() => void handleExportPdf()}>
           Export PDF
         </button>
-        {pdfExportError !== null && <span style={{ color: "crimson" }}>{pdfExportError}</span>}
+        {pdfExportError !== null && <span style={{ color: "var(--color-danger)" }}>{pdfExportError}</span>}
         <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{Math.round(viewTransform.zoom * 100)}%</span>
         <button type="button" onClick={() => setViewTransform({ zoom: 1, panX: 0, panY: 0 })}>
           Reset View
         </button>
-        {instanceWarnings.length > 0 && (
+        {visibleWarnings.length > 0 && (
           <button
             type="button"
             onClick={() => setIsWarningsPanelOpen((open) => !open)}
-            style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 4, padding: "4px 10px" }}
+            style={{
+              background: "var(--color-warning-bg)",
+              border: "1px solid var(--color-warning-border)",
+              borderRadius: "var(--radius)",
+              padding: "4px 10px",
+              color: "var(--color-warning)",
+              fontWeight: 600,
+            }}
           >
-            ⚠ {instanceWarnings.length} warning{instanceWarnings.length === 1 ? "" : "s"}
+            ⚠ {visibleWarnings.length} warning{visibleWarnings.length === 1 ? "" : "s"}
           </button>
         )}
       </div>
-      {isWarningsPanelOpen && instanceWarnings.length > 0 && (
+      {isWarningsPanelOpen && visibleWarnings.length > 0 && (
         <div
           role="alert"
-          style={{ padding: "8px 12px", background: "#fffbeb", borderBottom: "1px solid #f59e0b", maxHeight: 160, overflowY: "auto" }}
+          style={{ padding: "var(--space-sm) var(--space-md)", background: "var(--color-warning-bg)", borderBottom: "1px solid var(--color-warning-border)", maxHeight: 180, overflowY: "auto" }}
         >
-          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13 }}>
-            {instanceWarnings.map((warning, index) => (
-              <li key={`${warning.instanceId}-${warning.code}-${index}`}>
-                <strong>{warning.code}:</strong> {warning.message}
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", fontSize: 13 }}>
+            {visibleWarnings.map((warning, index) => (
+              <li
+                key={`${warning.instanceId}-${warning.code}-${index}`}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, padding: "3px 0" }}
+              >
+                <span>
+                  <strong>{warning.code}:</strong> {warning.message}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Dismiss warning"
+                  onClick={() => setDismissedWarningKeys((current) => new Set(current).add(warningKey(warning)))}
+                  style={{ background: "none", border: "none", color: "var(--color-warning)", fontWeight: 700, flexShrink: 0, padding: "0 4px" }}
+                >
+                  ×
+                </button>
               </li>
             ))}
           </ul>

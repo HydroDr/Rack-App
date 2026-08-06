@@ -21,19 +21,21 @@ interface ToolDefinition {
   readonly id: ToolId;
   readonly label: string;
   readonly category: ToolCategory;
+  readonly icon: string;
 }
 
+/** Minimal geometric glyphs, not literal icon art — enough to give each tool button a distinct silhouette at a glance without pulling in an icon library. */
 const TOOL_DEFINITIONS: readonly ToolDefinition[] = [
-  { id: "select", label: "Select", category: "selectionNavigation" },
-  { id: "place", label: "Place Template", category: "drawingStructure" },
-  { id: "arrayRepeat", label: "Array/Repeat", category: "drawingStructure" },
-  { id: "mirror", label: "Mirror", category: "drawingStructure" },
-  { id: "pathLane", label: "Path/Lane", category: "drawingStructure" },
-  { id: "zone", label: "Draw Zone", category: "drawingStructure" },
-  { id: "wall", label: "Wall", category: "drawingStructure" },
-  { id: "buildingColumn", label: "Building Column", category: "drawingStructure" },
-  { id: "dockDoor", label: "Dock Door", category: "drawingStructure" },
-  { id: "door", label: "Door", category: "drawingStructure" },
+  { id: "select", label: "Select", category: "selectionNavigation", icon: "↖" },
+  { id: "place", label: "Place Template", category: "drawingStructure", icon: "▦" },
+  { id: "arrayRepeat", label: "Array/Repeat", category: "drawingStructure", icon: "▦▦" },
+  { id: "mirror", label: "Mirror", category: "drawingStructure", icon: "⇋" },
+  { id: "pathLane", label: "Path/Lane", category: "drawingStructure", icon: "⌁" },
+  { id: "zone", label: "Draw Zone", category: "drawingStructure", icon: "▭" },
+  { id: "wall", label: "Wall", category: "drawingStructure", icon: "▤" },
+  { id: "buildingColumn", label: "Building Column", category: "drawingStructure", icon: "▮" },
+  { id: "dockDoor", label: "Dock Door", category: "drawingStructure", icon: "⊟" },
+  { id: "door", label: "Door", category: "drawingStructure", icon: "▯" },
 ];
 
 const CATEGORY_LABELS: Record<ToolCategory, string> = {
@@ -73,14 +75,14 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
         display: "flex",
         flexDirection: isHorizontal ? "row" : "column",
         flexWrap: "wrap",
-        gap: 12,
-        padding: 8,
+        gap: "var(--space-md)",
+        padding: "var(--space-sm)",
         background: "var(--color-surface)",
         borderBottom: toolbarPosition === "top" ? "1px solid var(--color-border)" : undefined,
         alignItems: "center",
       }}
     >
-      <label>
+      <label style={{ fontSize: 13 }}>
         Dock:{" "}
         <select value={toolbarPosition} onChange={(event) => setToolbarPosition(event.target.value as ToolbarPosition)}>
           <option value="top">Top</option>
@@ -92,23 +94,42 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
 
       <div>
         {(Object.keys(CATEGORY_LABELS) as ToolCategory[]).map((category) => (
-          <label key={category} style={{ marginRight: 8, fontSize: 13 }}>
+          <label key={category} style={{ marginRight: 8, fontSize: 13, color: "var(--color-text-muted)" }}>
             <input type="checkbox" checked={visibleCategories.has(category)} onChange={() => toggleCategory(category)} /> {CATEGORY_LABELS[category]}
           </label>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 4 }}>
-        {TOOL_DEFINITIONS.filter((tool) => visibleCategories.has(tool.category)).map((tool) => (
-          <button
-            key={tool.id}
-            aria-pressed={activeToolId === tool.id}
-            onClick={() => onSelectTool(tool.id)}
-            style={{ fontWeight: activeToolId === tool.id ? 700 : 400 }}
-          >
-            {tool.label}
-          </button>
-        ))}
+      <div style={{ display: "flex", gap: 2 }}>
+        {TOOL_DEFINITIONS.filter((tool) => visibleCategories.has(tool.category)).map((tool) => {
+          const isActive = activeToolId === tool.id;
+          return (
+            <button
+              key={tool.id}
+              aria-pressed={isActive}
+              onClick={() => onSelectTool(tool.id)}
+              title={tool.label}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                minWidth: 44,
+                padding: "4px 6px",
+                fontWeight: isActive ? 700 : 400,
+                background: isActive ? "var(--color-accent-bg)" : "transparent",
+                border: isActive ? "1px solid var(--color-accent)" : "1px solid transparent",
+                borderRadius: "var(--radius)",
+                color: isActive ? "var(--color-accent)" : "var(--color-text)",
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 15, lineHeight: 1 }}>
+                {tool.icon}
+              </span>
+              <span style={{ fontSize: 10, lineHeight: 1.1, whiteSpace: "nowrap" }}>{tool.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {quickMenuTools.length > 0 && (
@@ -126,20 +147,32 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
         </div>
       )}
 
-      <button disabled={activeToolId === null} onClick={() => activeToolId !== null && addToQuickMenu(activeToolId)}>
+      <button disabled={activeToolId === null} onClick={() => activeToolId !== null && addToQuickMenu(activeToolId)} style={{ fontSize: 12 }}>
         Add to quick menu
       </button>
 
-      <div style={{ display: "flex", gap: 10, borderLeft: "1px solid var(--color-border)", paddingLeft: 10 }}>
-        <label>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginLeft: isHorizontal ? "auto" : undefined,
+          padding: "4px 10px",
+          background: "var(--color-surface-alt)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>Snap</span>
+        <label style={{ fontSize: 13 }}>
           <input
             type="checkbox"
             checked={snapSettings.gridSnapEnabled}
             onChange={(event) => onChangeSnapSettings({ ...snapSettings, gridSnapEnabled: event.target.checked })}
           />{" "}
-          Grid Snap
+          Grid
         </label>
-        <label>
+        <label style={{ fontSize: 13 }}>
           <input
             type="checkbox"
             checked={snapSettings.orthoModeEnabled}
@@ -147,13 +180,13 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
           />{" "}
           Ortho
         </label>
-        <label>
+        <label style={{ fontSize: 13 }}>
           <input
             type="checkbox"
             checked={snapSettings.objectSnapEnabled}
             onChange={(event) => onChangeSnapSettings({ ...snapSettings, objectSnapEnabled: event.target.checked })}
           />{" "}
-          Object Snap
+          Object
         </label>
       </div>
     </div>

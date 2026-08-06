@@ -30,6 +30,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
   const [expiryDays, setExpiryDays] = useState(DEFAULT_SHARE_LINK_DURATION_DAYS);
   const [error, setError] = useState<string | null>(null);
   const [lastCreatedUrl, setLastCreatedUrl] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   useEffect(() => {
     async function reload(): Promise<void> {
@@ -79,6 +80,17 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
     setLinks((current) => [...current, result.value]);
     setLastCreatedUrl(shareUrlFor(result.value));
     setSelectedLayoutIds(new Set());
+    setCopyStatus("idle");
+  }
+
+  async function handleCopyLink(): Promise<void> {
+    if (lastCreatedUrl === null) return;
+    try {
+      await navigator.clipboard.writeText(lastCreatedUrl);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+    }
   }
 
   async function handleRevoke(link: ShareLink): Promise<void> {
@@ -103,54 +115,89 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
         width: 420,
         background: "var(--color-surface)",
         borderLeft: "1px solid var(--color-border)",
-        padding: 16,
+        padding: "var(--space-lg)",
         overflowY: "auto",
         zIndex: 20,
+        fontSize: 13,
+        boxShadow: "-4px 0 16px rgba(0, 0, 0, 0.08)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 style={{ margin: 0 }}>Share</h2>
+        <h2 style={{ margin: 0, fontSize: 17 }}>Share</h2>
         <button type="button" onClick={onClose}>
           Close
         </button>
       </div>
 
-      <fieldset style={{ marginTop: 16 }}>
-        <legend>New share link</legend>
+      <fieldset
+        style={{
+          marginTop: "var(--space-lg)",
+          padding: "var(--space-sm) var(--space-md) var(--space-md)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius)",
+          background: "var(--color-surface-alt)",
+        }}
+      >
+        <legend style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>
+          New share link
+        </legend>
         {layouts.length === 0 && <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>No layouts in this project yet.</p>}
         {layouts.map((layout) => (
-          <label key={layout.id} style={{ display: "block" }}>
+          <label key={layout.id} style={{ display: "block", marginBottom: "var(--space-xs)" }}>
             <input type="checkbox" checked={selectedLayoutIds.has(layout.id)} onChange={() => toggleLayout(layout.id)} /> {layout.name}
           </label>
         ))}
-        <label style={{ display: "block", marginTop: 8 }}>
+        <label style={{ display: "block", marginTop: "var(--space-sm)" }}>
           Expires in (days):{" "}
-          <input type="number" min={1} value={expiryDays} onChange={(event) => setExpiryDays(Number(event.target.value))} />
+          <input type="number" min={1} value={expiryDays} onChange={(event) => setExpiryDays(Number(event.target.value))} style={{ width: 60 }} />
         </label>
 
-        {error !== null && <p style={{ color: "crimson" }}>{error}</p>}
+        {error !== null && <p style={{ color: "var(--color-danger)" }}>{error}</p>}
 
-        <button type="button" onClick={() => void handleCreateLink()} style={{ marginTop: 8 }}>
+        <button type="button" onClick={() => void handleCreateLink()} style={{ marginTop: "var(--space-sm)" }}>
           Create Link
         </button>
 
         {lastCreatedUrl !== null && (
-          <div style={{ marginTop: 8 }}>
-            <label>
-              Link created:{" "}
+          <div style={{ marginTop: "var(--space-sm)" }}>
+            <label style={{ display: "block", marginBottom: "var(--space-xs)" }}>Link created:</label>
+            <div style={{ display: "flex", gap: "var(--space-xs)" }}>
               <input
                 readOnly
                 value={lastCreatedUrl}
+                aria-label="Link created"
                 onFocus={(event) => event.target.select()}
-                style={{ width: "100%" }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  padding: "4px 8px",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius)",
+                  background: "var(--color-surface)",
+                }}
               />
-            </label>
+              <button
+                type="button"
+                onClick={() => void handleCopyLink()}
+                style={{
+                  flexShrink: 0,
+                  border: "1px solid var(--color-accent)",
+                  borderRadius: "var(--radius)",
+                  background: "var(--color-accent-bg)",
+                  color: "var(--color-accent)",
+                  padding: "4px 10px",
+                }}
+              >
+                {copyStatus === "copied" ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            {copyStatus === "failed" && <p style={{ color: "var(--color-danger)", fontSize: 12, marginBottom: 0 }}>Couldn't copy — select and copy manually.</p>}
           </div>
         )}
       </fieldset>
 
-      <div style={{ marginTop: 16 }}>
-        <h3>Links &amp; feedback</h3>
+      <div style={{ marginTop: "var(--space-lg)" }}>
+        <h3 style={{ fontSize: 14, marginBottom: "var(--space-sm)" }}>Links &amp; feedback</h3>
         {links.length === 0 && <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>No share links yet.</p>}
         {links.map((link) => {
           const linkFeedback = feedback.filter((item) => item.shareLinkId === link.id);
