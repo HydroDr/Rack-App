@@ -41,7 +41,18 @@ import {
 } from "@rack-app/canvas";
 import { fromInches, resolveConfiguration, resolveLevelDefinitions, toInches, type ConfigurationType } from "@rack-app/rules-engine";
 import { exportLayoutPdf, type CanvasSnapshot } from "@rack-app/export";
-import { nowIsoTimestamp, type ComponentType, type EntityId, type GroupLayer, type PalletProfile, type RackTemplate, type Variant } from "@rack-app/state";
+import {
+  createProtectorPlacement,
+  nowIsoTimestamp,
+  type ComponentType,
+  type EntityId,
+  type GroupLayer,
+  type LineEndProtectorFlags,
+  type PalletProfile,
+  type ProtectorPlacement,
+  type RackTemplate,
+  type Variant,
+} from "@rack-app/state";
 import { useAppStores, useHistoryStore, useLayoutStore, useUiPreferencesStore } from "../app/stores.js";
 import { computeInstanceBounds } from "../app/instanceGeometry.js";
 import { computeInstanceBom } from "./bomUtils.js";
@@ -427,17 +438,71 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   const selectedInstance = selectedInstanceId === null ? null : (rackInstances.get(selectedInstanceId) ?? null);
   const selectedTemplate = selectedInstance === null ? null : (templates.find((t) => t.id === selectedInstance.templateId) ?? null);
   const selectedVariant = selectedInstance?.variantId === undefined ? null : (variants.find((v) => v.id === selectedInstance.variantId) ?? null);
+  const selectedProtectorPlacement =
+    selectedInstance === null
+      ? undefined
+      : Array.from(protectorPlacements.values()).find((candidate) => candidate.rackInstanceId === selectedInstance.id);
 
   const selectedPpo = useMemo(() => {
     if (selectedInstance === null || selectedTemplate === null) return null;
     const palletProfile = palletProfiles.find((profile) => profile.id === selectedTemplate.palletProfileId);
     if (palletProfile === undefined) return null;
-    const protectorPlacement = Array.from(protectorPlacements.values()).find(
-      (candidate) => candidate.rackInstanceId === selectedInstance.id,
-    );
-    const result = computeInstanceBom(selectedInstance, selectedTemplate, palletProfile, defaultAnchorsPerUpright, protectorPlacement);
+    const result = computeInstanceBom(selectedInstance, selectedTemplate, palletProfile, defaultAnchorsPerUpright, selectedProtectorPlacement);
     return result.kind === "error" ? null : result.value.ppo;
-  }, [selectedInstance, selectedTemplate, palletProfiles, defaultAnchorsPerUpright, protectorPlacements]);
+  }, [selectedInstance, selectedTemplate, palletProfiles, defaultAnchorsPerUpright, selectedProtectorPlacement]);
+
+  const protectorPlacementOps: EntityCommandOps<ProtectorPlacement> = {
+    upsert: (placement) => layoutStore.getState().upsertProtectorPlacement(placement),
+    remove: (id) => layoutStore.getState().removeProtectorPlacement(id),
+  };
+
+  /** Upserts a ProtectorPlacement for the selected instance — creating one on first edit, updating in place afterward. Routed through commandStack like every other mutation here. */
+  function commitProtectorPlacement(next: {
+    lineEndProtectors: readonly LineEndProtectorFlags[];
+    columnProtectorUprightIndices: readonly number[];
+  }): void {
+    if (selectedInstance === null) return;
+
+    if (selectedProtectorPlacement !== undefined) {
+      const updated: ProtectorPlacement = { ...selectedProtectorPlacement, ...next, updatedAt: nowIsoTimestamp() };
+      commitCommand(historyStore, createUpsertCommand(protectorPlacementOps, updated, selectedProtectorPlacement));
+      return;
+    }
+
+    const layoutId = layoutStore.getState().layoutId;
+    if (layoutId === null) return;
+    const result = createProtectorPlacement(
+      { layoutId, rackInstanceId: selectedInstance.id, lineEndProtectors: next.lineEndProtectors, columnProtectorUprightIndices: next.columnProtectorUprightIndices },
+      selectedInstance.rackColumns,
+    );
+    if (result.kind === "error") {
+      window.alert(result.message);
+      return;
+    }
+    commitCommand(historyStore, createUpsertCommand(protectorPlacementOps, result.value));
+  }
+
+  function handleToggleLineEndProtector(lineIndex: number, side: "frontEnd" | "backEnd", value: boolean): void {
+    if (selectedInstance === null) return;
+    const current = Array.from(
+      { length: selectedInstance.rackColumns },
+      (_, index) => selectedProtectorPlacement?.lineEndProtectors[index] ?? { frontEnd: false, backEnd: false },
+    );
+    const nextLineEndProtectors = current.map((flags, index) => (index === lineIndex ? { ...flags, [side]: value } : flags));
+    commitProtectorPlacement({
+      lineEndProtectors: nextLineEndProtectors,
+      columnProtectorUprightIndices: selectedProtectorPlacement?.columnProtectorUprightIndices ?? [],
+    });
+  }
+
+  function handleSetColumnProtectorCount(count: number): void {
+    if (selectedInstance === null) return;
+    const lineEndProtectors = Array.from(
+      { length: selectedInstance.rackColumns },
+      (_, index) => selectedProtectorPlacement?.lineEndProtectors[index] ?? { frontEnd: false, backEnd: false },
+    );
+    commitProtectorPlacement({ lineEndProtectors, columnProtectorUprightIndices: Array.from({ length: count }, (_, index) => index) });
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -538,6 +603,9 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           template={selectedTemplate}
           variant={selectedVariant}
           ppo={selectedPpo}
+          protectorPlacement={selectedProtectorPlacement}
+          onToggleLineEndProtector={handleToggleLineEndProtector}
+          onSetColumnProtectorCount={handleSetColumnProtectorCount}
           onUpdateBays={(bays) => {
             if (selectedInstance === null) return;
             const ops: EntityCommandOps<typeof selectedInstance> = {

@@ -1,28 +1,47 @@
 /**
  * Selected-instance details: template/variant, config + recompute,
- * levels, PPO, thumbnail, per-component color (Spec §6.3.2).
+ * levels, PPO, thumbnail, per-component color, protector placement
+ * (Spec §6.3.2, §3.1, §3.1b).
  *
- * Bay-count edits apply live; configuration-type changes are staged
- * locally and only take effect when "Recompute" is clicked — per Spec
- * §6.4.2, restructuring single/back-to-back/double-deep is a heavier,
- * deliberate change, distinct from the values that are already kept
- * current automatically. This component never touches layoutStore or
- * commandStack directly — every change is reported upward via callback
- * props, exactly like Toolbar.tsx.
+ * Bay-count and protector-placement edits apply live; configuration-type
+ * changes are staged locally and only take effect when "Recompute" is
+ * clicked — per Spec §6.4.2, restructuring single/back-to-back/double-
+ * deep is a heavier, deliberate change, distinct from the values that
+ * are already kept current automatically. This component never touches
+ * layoutStore or commandStack directly — every change is reported
+ * upward via callback props, exactly like Toolbar.tsx.
+ *
+ * Column-protector placement is exposed as a simple count (the first N
+ * upright positions along the line get a column protector) rather than
+ * a per-upright spatial picker — ProtectorPlacement.columnProtectorUprightIndices
+ * supports arbitrary positions, but a count is the simplest UI that
+ * still produces a valid placement; a future phase can add per-upright
+ * picking on the canvas itself if that granularity turns out to matter.
  */
 
 import { useEffect, useState } from "react";
 import { CONFIGURATION_TYPES, type ConfigurationType } from "@rack-app/rules-engine";
-import { getVariantDisplayName, type ComponentType, type RackInstance, type RackTemplate, type Variant } from "@rack-app/state";
+import {
+  getVariantDisplayName,
+  type ComponentType,
+  type LineEndProtectorFlags,
+  type ProtectorPlacement,
+  type RackInstance,
+  type RackTemplate,
+  type Variant,
+} from "@rack-app/state";
 
 export interface PropertiesPanelProps {
   readonly instance: RackInstance | null;
   readonly template: RackTemplate | null;
   readonly variant: Variant | null;
   readonly ppo: number | null;
+  readonly protectorPlacement: ProtectorPlacement | undefined;
   readonly onUpdateBays: (bays: number) => void;
   readonly onRecomputeConfiguration: (next: { configurationType: ConfigurationType; rackColumns: number }) => void;
   readonly onComponentColorOverrideChange: (component: ComponentType, color: string | undefined) => void;
+  readonly onToggleLineEndProtector: (lineIndex: number, side: "frontEnd" | "backEnd", value: boolean) => void;
+  readonly onSetColumnProtectorCount: (count: number) => void;
 }
 
 const COMPONENT_TYPES: readonly ComponentType[] = ["upright", "beam", "wireDeck", "rowSpacer", "protector"];
@@ -32,9 +51,12 @@ export function PropertiesPanel({
   template,
   variant,
   ppo,
+  protectorPlacement,
   onUpdateBays,
   onRecomputeConfiguration,
   onComponentColorOverrideChange,
+  onToggleLineEndProtector,
+  onSetColumnProtectorCount,
 }: PropertiesPanelProps) {
   const [pendingConfigType, setPendingConfigType] = useState<ConfigurationType>(instance?.configurationType ?? "single");
   const [pendingColumns, setPendingColumns] = useState<number>(instance?.rackColumns ?? 1);
@@ -56,6 +78,12 @@ export function PropertiesPanel({
   }
 
   const hasPendingConfigChange = pendingConfigType !== instance.configurationType || pendingColumns !== instance.rackColumns;
+
+  const lineEndProtectors: readonly LineEndProtectorFlags[] = Array.from(
+    { length: instance.rackColumns },
+    (_, index) => protectorPlacement?.lineEndProtectors[index] ?? { frontEnd: false, backEnd: false },
+  );
+  const columnProtectorCount = protectorPlacement?.columnProtectorUprightIndices.length ?? 0;
 
   return (
     <aside style={{ width: 260, padding: 12, borderLeft: "1px solid var(--color-border)", background: "var(--color-surface)", overflowY: "auto" }}>
@@ -124,6 +152,41 @@ export function PropertiesPanel({
             />
           </label>
         ))}
+      </fieldset>
+
+      <fieldset style={{ marginTop: 8 }}>
+        <legend>Protectors</legend>
+        {lineEndProtectors.map((flags, lineIndex) => (
+          <div key={lineIndex} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4, fontSize: 13 }}>
+            <span>Line {lineIndex + 1}:</span>
+            <label>
+              <input
+                type="checkbox"
+                checked={flags.frontEnd}
+                onChange={(event) => onToggleLineEndProtector(lineIndex, "frontEnd", event.target.checked)}
+              />{" "}
+              Front
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={flags.backEnd}
+                onChange={(event) => onToggleLineEndProtector(lineIndex, "backEnd", event.target.checked)}
+              />{" "}
+              Back
+            </label>
+          </div>
+        ))}
+        <label style={{ display: "block", marginTop: 6 }}>
+          Column protectors (uprights):{" "}
+          <input
+            type="number"
+            min={0}
+            value={columnProtectorCount}
+            onChange={(event) => onSetColumnProtectorCount(Math.max(0, Number.parseInt(event.target.value, 10) || 0))}
+            style={{ width: 50 }}
+          />
+        </label>
       </fieldset>
     </aside>
   );
