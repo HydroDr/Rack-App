@@ -77,7 +77,7 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
         flexWrap: "wrap",
         gap: "var(--space-md)",
         padding: "var(--space-sm)",
-        background: "var(--color-surface)",
+        background: "var(--color-bg-card)",
         borderBottom: toolbarPosition === "top" ? "1px solid var(--color-border)" : undefined,
         alignItems: "center",
       }}
@@ -94,7 +94,7 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
 
       <div>
         {(Object.keys(CATEGORY_LABELS) as ToolCategory[]).map((category) => (
-          <label key={category} style={{ marginRight: 8, fontSize: 13, color: "var(--color-text-muted)" }}>
+          <label key={category} style={{ marginRight: 8, fontSize: 13, color: "var(--color-text-secondary)" }}>
             <input type="checkbox" checked={visibleCategories.has(category)} onChange={() => toggleCategory(category)} /> {CATEGORY_LABELS[category]}
           </label>
         ))}
@@ -116,11 +116,11 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
                 gap: 2,
                 minWidth: 44,
                 padding: "4px 6px",
-                fontWeight: isActive ? 700 : 400,
-                background: isActive ? "var(--color-accent-bg)" : "transparent",
+                fontWeight: isActive ? 500 : 400,
+                background: isActive ? "var(--color-accent-subtle)" : "transparent",
                 border: isActive ? "1px solid var(--color-accent)" : "1px solid transparent",
                 borderRadius: "var(--radius)",
-                color: isActive ? "var(--color-accent)" : "var(--color-text)",
+                color: isActive ? "var(--color-accent)" : "var(--color-text-primary)",
               }}
             >
               <span aria-hidden="true" style={{ fontSize: 15, lineHeight: 1 }}>
@@ -158,36 +158,41 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
           gap: 10,
           marginLeft: isHorizontal ? "auto" : undefined,
           padding: "4px 10px",
-          background: "var(--color-surface-alt)",
+          background: "var(--color-bg-hover)",
           border: "1px solid var(--color-border)",
           borderRadius: "var(--radius)",
         }}
       >
-        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>Snap</span>
-        <label style={{ fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={snapSettings.gridSnapEnabled}
-            onChange={(event) => onChangeSnapSettings({ ...snapSettings, gridSnapEnabled: event.target.checked })}
-          />{" "}
-          Grid
-        </label>
-        <label style={{ fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={snapSettings.orthoModeEnabled}
-            onChange={(event) => onChangeSnapSettings({ ...snapSettings, orthoModeEnabled: event.target.checked })}
-          />{" "}
-          Ortho
-        </label>
-        <label style={{ fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={snapSettings.objectSnapEnabled}
-            onChange={(event) => onChangeSnapSettings({ ...snapSettings, objectSnapEnabled: event.target.checked })}
-          />{" "}
-          Object
-        </label>
+        <span style={{ fontSize: 11, fontWeight: 500, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>Snap</span>
+        {(
+          [
+            ["Grid", snapSettings.gridSnapEnabled, "gridSnapEnabled"],
+            ["Ortho", snapSettings.orthoModeEnabled, "orthoModeEnabled"],
+            ["Object", snapSettings.objectSnapEnabled, "objectSnapEnabled"],
+          ] as const
+        ).map(([label, isEnabled, field]) => (
+          <label
+            key={field}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: 13,
+              padding: "3px 8px",
+              borderRadius: "var(--radius)",
+              border: isEnabled ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
+              background: isEnabled ? "var(--color-accent)" : "transparent",
+              color: isEnabled ? "var(--color-text-on-accent)" : "var(--color-text-secondary)",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={isEnabled}
+              onChange={(event) => onChangeSnapSettings({ ...snapSettings, [field]: event.target.checked })}
+            />
+            {label}
+          </label>
+        ))}
       </div>
     </div>
   );

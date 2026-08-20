@@ -108,7 +108,7 @@ export function CompareTab({ currentLayoutId, layouts, templates, palletProfiles
       </div>
 
       {isComparing && <p>Comparing…</p>}
-      {errorMessage !== null && <p style={{ color: "crimson" }}>{errorMessage}</p>}
+      {errorMessage !== null && <p style={{ color: "var(--color-danger)" }}>{errorMessage}</p>}
 
       {diffResult !== null && (
         <table style={{ marginTop: 16, borderCollapse: "collapse", width: "100%", maxWidth: 480 }}>
@@ -121,7 +121,7 @@ export function CompareTab({ currentLayoutId, layouts, templates, palletProfiles
           <tbody>
             {diffResult.lineItems.length === 0 && (
               <tr>
-                <td colSpan={2} style={{ padding: "8px", color: "var(--color-text-muted)" }}>
+                <td colSpan={2} style={{ padding: "8px", color: "var(--color-text-secondary)" }}>
                   No differences.
                 </td>
               </tr>
@@ -129,7 +129,7 @@ export function CompareTab({ currentLayoutId, layouts, templates, palletProfiles
             {diffResult.lineItems.map((item) => (
               <tr key={item.material}>
                 <td style={{ padding: "4px 8px" }}>{item.material}</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", color: item.delta > 0 ? "#166534" : "#991b1b" }}>
+                <td style={{ padding: "4px 8px", textAlign: "right", color: item.delta > 0 ? "var(--color-success)" : "var(--color-danger)" }}>
                   {item.delta > 0 ? "+" : ""}
                   {item.delta}
                 </td>

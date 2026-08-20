@@ -20,6 +20,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Application } from "pixi.js";
 import { fromInches, resolveConfiguration, toInches } from "@rack-app/rules-engine";
+import { resolveCssColor } from "../app/cssColor.js";
 import {
   createFeedback,
   generateFeedbackSessionId,
@@ -66,7 +67,9 @@ function ReadOnlyCanvas({
     let disposed = false;
     let initialized = false;
     const app = new Application();
-    const initOptions = containerRef.current === null ? { background: "#f4f5f7" } : { background: "#f4f5f7", resizeTo: containerRef.current };
+    const canvasBackground = resolveCssColor("--color-bg-hover", "#f4f5f7");
+    const initOptions =
+      containerRef.current === null ? { background: canvasBackground } : { background: canvasBackground, resizeTo: containerRef.current };
     void app.init(initOptions).then(() => {
       initialized = true;
       // init() is async, so React StrictMode's mount->cleanup->remount cycle can call the
@@ -110,7 +113,13 @@ function ReadOnlyCanvas({
     const app = appRef.current;
     if (app === null) return;
     const scene = renderScene({
-      grid: { widthIn: fromInches(6000), heightIn: fromInches(3000), intervalIn: fromInches(120), color: "#dddddd" },
+      grid: {
+        widthIn: fromInches(6000),
+        heightIn: fromInches(3000),
+        intervalIn: fromInches(120),
+        color: resolveCssColor("--color-border", "#dddddd"),
+        labelColor: resolveCssColor("--color-text-secondary", "#6b7280"),
+      },
       warehouseElements,
       rackInstances: renderInputs,
       pathLanes,

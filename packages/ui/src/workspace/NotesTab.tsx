@@ -87,7 +87,7 @@ export function NotesTab({ projectId, layoutId }: NotesTabProps) {
       </div>
 
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {notes.length === 0 && <li style={{ color: "var(--color-text-muted)" }}>No notes yet.</li>}
+        {notes.length === 0 && <li style={{ color: "var(--color-text-secondary)" }}>No notes yet.</li>}
         {notes.map((note) => (
           <li key={note.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--color-border)" }}>
             {note.noteType === "freeform" ? (

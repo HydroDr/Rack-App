@@ -34,7 +34,7 @@ export function FeedbackWidget({ layoutId, shareLinkId, sessionId }: FeedbackWid
   }
 
   return (
-    <div style={{ padding: 12, borderTop: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+    <div style={{ padding: 12, borderTop: "1px solid var(--color-border)", background: "var(--color-bg-card)" }}>
       <textarea
         value={text}
         onChange={(event) => {
@@ -46,7 +46,7 @@ export function FeedbackWidget({ layoutId, shareLinkId, sessionId }: FeedbackWid
       />
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
         <button onClick={() => void handleSubmit()}>Send</button>
-        {justSubmitted && <span style={{ color: "var(--color-text-muted)", fontSize: 13 }}>Thanks for your feedback!</span>}
+        {justSubmitted && <span style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>Thanks for your feedback!</span>}
       </div>
     </div>
   );

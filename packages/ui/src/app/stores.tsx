@@ -37,6 +37,7 @@ import {
   type RoiScenario,
   type ShareLink,
   type Template,
+  type ThemePreference,
   type UiPreferencesStore,
   type Variant,
   type WarehouseElement,
@@ -70,6 +71,25 @@ export interface AppStores {
 }
 
 const DEFAULT_DATABASE_NAME = "rack-app";
+const THEME_STORAGE_KEY = "rack-app:theme";
+
+/** Reads the persisted theme choice (Design_System.docx §6.1); falls back to the store's own "dark" default when unset or unavailable (e.g. in tests). */
+function readPersistedTheme(): ThemePreference | undefined {
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return stored === "light" || stored === "dark" ? stored : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function persistTheme(theme: ThemePreference): void {
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Storage unavailable (e.g. private browsing quota) — theme just won't survive a reload.
+  }
+}
 
 function createAppStores(databaseName: string): AppStores {
   const db = new RackAppDatabase(databaseName);
@@ -98,7 +118,11 @@ function createAppStores(databaseName: string): AppStores {
 
   const projectStore = createProjectStore();
   const layoutStore = createLayoutStore();
-  const uiPreferencesStore = createUiPreferencesStore();
+  const persistedTheme = readPersistedTheme();
+  const uiPreferencesStore = createUiPreferencesStore(persistedTheme === undefined ? {} : { theme: persistedTheme });
+  uiPreferencesStore.subscribe((state, previousState) => {
+    if (state.theme !== previousState.theme) persistTheme(state.theme);
+  });
   const historyStore = createHistoryStore();
 
   // Fire-and-forget: autosave subscribes for the lifetime of the app: it's never disposed here.

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { Container } from "pixi.js";
+import { Container, Text } from "pixi.js";
 import { fromInches } from "@rack-app/rules-engine";
 import type { PathLane, RackInstance, RackTemplate, WarehouseElement } from "@rack-app/state";
-import { renderGrid } from "../renderer/gridRenderer.js";
+import { renderGrid, renderGridLabels } from "../renderer/gridRenderer.js";
 import { renderWarehouseElement, renderWarehouseElements } from "../renderer/warehouseElementRenderer.js";
 import { renderPathLane } from "../renderer/pathRenderer.js";
 import { renderRackInstance, renderRackInstances, type RackRenderInput } from "../renderer/rackRenderer.js";
@@ -56,6 +56,18 @@ describe("renderer/gridRenderer.ts", () => {
 
   it("draws without throwing for a normal grid", () => {
     expect(() => renderGrid({ widthIn: fromInches(1200), heightIn: fromInches(600), intervalIn: fromInches(12), color: "#cccccc" })).not.toThrow();
+  });
+
+  it("renderGridLabels returns an empty Container for a zero/negative interval", () => {
+    const container = renderGridLabels({ widthIn: fromInches(100), heightIn: fromInches(100), intervalIn: fromInches(0), color: "#cccccc", labelColor: "#6b7280" });
+    expect(container.children).toHaveLength(0);
+  });
+
+  it("renderGridLabels places one column letter per interval along the top and one row number per interval along the left", () => {
+    // 3 columns (0, 12, 24) and 2 rows (0, 12) at a 12in interval over a 24x12 grid.
+    const container = renderGridLabels({ widthIn: fromInches(24), heightIn: fromInches(12), intervalIn: fromInches(12), color: "#cccccc", labelColor: "#6b7280" });
+    const texts = container.children.map((child) => (child as Text).text);
+    expect(texts).toEqual(["A", "B", "C", "1", "2"]);
   });
 });
 
@@ -122,7 +134,7 @@ describe("renderer/rackRenderer.ts — single efficient object regardless of bay
 describe("renderer/sceneRenderer.ts", () => {
   it("assembles grid, warehouse, rack, and path layers in bottom-to-top order", () => {
     const scene = renderScene({
-      grid: { widthIn: fromInches(1200), heightIn: fromInches(600), intervalIn: fromInches(12), color: "#cccccc" },
+      grid: { widthIn: fromInches(1200), heightIn: fromInches(600), intervalIn: fromInches(12), color: "#cccccc", labelColor: "#6b7280" },
       warehouseElements: [],
       rackInstances: [],
       pathLanes: [],

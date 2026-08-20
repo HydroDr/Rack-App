@@ -18,9 +18,9 @@ export interface LayersGroupsPanelProps {
 
 export function LayersGroupsPanel({ groups, selectedGroupId, onSelectGroup, onToggleVisibility, onToggleLock }: LayersGroupsPanelProps) {
   return (
-    <aside style={{ width: 220, padding: 12, borderRight: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+    <aside style={{ width: 220, padding: 12, borderRight: "1px solid var(--color-border)", background: "var(--color-bg-card)" }}>
       <h3 style={{ marginTop: 0 }}>Layers / Groups</h3>
-      {groups.length === 0 && <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>No groups yet.</p>}
+      {groups.length === 0 && <p style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>No groups yet.</p>}
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {groups.map((group) => (
           <li

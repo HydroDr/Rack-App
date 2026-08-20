@@ -15,8 +15,11 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 
 export type UnitsPreference = "inches" | "feetInches" | "metric";
 export type ToolbarPosition = "top" | "bottom" | "left" | "right";
+export type ThemePreference = "light" | "dark";
 
 export interface UiPreferencesState {
+  /** Dark is the default (Design_System.docx §6.1); persisted to localStorage by the ui package. */
+  readonly theme: ThemePreference;
   readonly units: UnitsPreference;
   readonly toolbarPosition: ToolbarPosition;
   readonly toolbarVisibleCategories: ReadonlySet<string>;
@@ -33,6 +36,7 @@ export interface UiPreferencesState {
 }
 
 export interface UiPreferencesActions {
+  setTheme(theme: ThemePreference): void;
   setUnits(units: UnitsPreference): void;
   setToolbarPosition(position: ToolbarPosition): void;
   setToolbarVisibleCategories(categories: ReadonlySet<string>): void;
@@ -52,6 +56,7 @@ export interface UiPreferencesActions {
 export type UiPreferencesStore = UiPreferencesState & UiPreferencesActions;
 
 const DEFAULT_STATE: UiPreferencesState = {
+  theme: "dark",
   units: "feetInches",
   toolbarPosition: "top",
   toolbarVisibleCategories: new Set(["selectionNavigation", "drawingStructure", "measurement", "annotation"]),
@@ -70,6 +75,8 @@ export function createUiPreferencesStore(overrides: Partial<UiPreferencesState> 
 
   return createStore<UiPreferencesStore>((set) => ({
     ...initialState,
+
+    setTheme: (theme) => set({ theme }),
 
     setUnits: (units) => set({ units }),
 

@@ -75,12 +75,12 @@ export function PropertiesPanel({
     padding: "var(--space-sm) var(--space-md) var(--space-md)",
     border: "1px solid var(--color-border)",
     borderRadius: "var(--radius)",
-    background: "var(--color-surface-alt)",
+    background: "var(--color-bg-hover)",
   };
   const legendStyle: CSSProperties = {
     padding: "0 4px",
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 500,
     color: "var(--color-text-muted)",
     textTransform: "uppercase",
     letterSpacing: 0.4,
@@ -93,10 +93,10 @@ export function PropertiesPanel({
           width: 260,
           padding: "var(--space-md)",
           borderLeft: "1px solid var(--color-border)",
-          background: "var(--color-surface)",
+          background: "var(--color-bg-card)",
         }}
       >
-        <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>No selection.</p>
+        <p style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>No selection.</p>
       </aside>
     );
   }
@@ -115,7 +115,7 @@ export function PropertiesPanel({
         width: 260,
         padding: "var(--space-md)",
         borderLeft: "1px solid var(--color-border)",
-        background: "var(--color-surface)",
+        background: "var(--color-bg-card)",
         overflowY: "auto",
         fontSize: 13,
       }}
@@ -127,7 +127,7 @@ export function PropertiesPanel({
       <div
         style={{
           aspectRatio: "4 / 3",
-          background: "var(--color-surface-alt)",
+          background: "var(--color-bg-hover)",
           border: "1px solid var(--color-border)",
           borderRadius: "var(--radius)",
           display: "flex",
@@ -153,7 +153,7 @@ export function PropertiesPanel({
         />
       </label>
 
-      <div style={{ marginBottom: "var(--space-sm)", color: "var(--color-text-muted)" }}>
+      <div className="tabular-nums" style={{ marginBottom: "var(--space-sm)", color: "var(--color-text-muted)" }}>
         Levels: {template.palletLevels} &nbsp;|&nbsp; PPO: {ppo ?? "—"}
       </div>
 

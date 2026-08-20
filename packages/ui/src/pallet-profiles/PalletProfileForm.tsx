@@ -94,7 +94,7 @@ export function PalletProfileForm({ onCreated }: PalletProfileFormProps) {
         Weight (lb): <input type="number" value={weightLbValue} onChange={(event) => setWeightLbValue(Number(event.target.value))} />
       </label>
 
-      {error !== null && <p style={{ color: "crimson" }}>{error}</p>}
+      {error !== null && <p style={{ color: "var(--color-danger)" }}>{error}</p>}
 
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
         <button type="button" disabled={isSaving} onClick={() => void handleCreate()}>

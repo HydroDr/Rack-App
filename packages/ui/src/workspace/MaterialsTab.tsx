@@ -132,13 +132,13 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
         <tbody>
           {lineItems.length === 0 && (
             <tr>
-              <td colSpan={2} style={{ padding: "var(--space-sm)", color: "var(--color-text-muted)" }}>
+              <td colSpan={2} style={{ padding: "var(--space-sm)", color: "var(--color-text-secondary)" }}>
                 No materials in this area yet.
               </td>
             </tr>
           )}
           {lineItems.map((item, index) => (
-            <tr key={item.material} style={{ background: index % 2 === 0 ? "var(--color-surface)" : "var(--color-surface-alt)" }}>
+            <tr key={item.material} style={{ background: index % 2 === 0 ? "var(--color-bg-card)" : "var(--color-bg-hover)" }}>
               <td style={{ padding: "6px 8px" }}>{item.material}</td>
               <td style={{ padding: "6px 8px", textAlign: "right" }}>{item.quantity.toLocaleString()}</td>
             </tr>
@@ -147,8 +147,8 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
         {lineItems.length > 0 && (
           <tfoot>
             <tr>
-              <td style={{ padding: "6px 8px", fontWeight: 700, borderTop: "2px solid var(--color-border)" }}>Total pieces</td>
-              <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, borderTop: "2px solid var(--color-border)" }}>
+              <td style={{ padding: "6px 8px", fontWeight: 500, borderTop: "2px solid var(--color-border)" }}>Total pieces</td>
+              <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 500, borderTop: "2px solid var(--color-border)" }}>
                 {totalPieces.toLocaleString()}
               </td>
             </tr>

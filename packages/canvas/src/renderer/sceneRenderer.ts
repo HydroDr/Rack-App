@@ -9,13 +9,13 @@
 
 import { Container } from "pixi.js";
 import type { PathLane, WarehouseElement } from "@rack-app/state";
-import { renderGrid, type GridRenderOptions } from "./gridRenderer.js";
+import { renderGrid, renderGridLabels, type GridLabelOptions } from "./gridRenderer.js";
 import { renderWarehouseElements } from "./warehouseElementRenderer.js";
 import { renderRackInstances, type RackRenderInput } from "./rackRenderer.js";
 import { renderPathLanes } from "./pathRenderer.js";
 
 export interface SceneInput {
-  readonly grid: GridRenderOptions;
+  readonly grid: GridLabelOptions;
   readonly warehouseElements: readonly WarehouseElement[];
   readonly rackInstances: readonly RackRenderInput[];
   readonly pathLanes: readonly PathLane[];
@@ -35,6 +35,7 @@ export function renderScene(input: SceneInput): Scene {
 
   const gridLayer = new Container();
   gridLayer.addChild(renderGrid(input.grid));
+  gridLayer.addChild(renderGridLabels(input.grid));
 
   const warehouseElementLayer = renderWarehouseElements(input.warehouseElements);
   const rackInstanceLayer = renderRackInstances(input.rackInstances);

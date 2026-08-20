@@ -15,14 +15,14 @@ import { describe, expect, it } from "vitest";
 const appSource = readFileSync(join(process.cwd(), "src", "App.tsx"), "utf-8");
 
 describe("App.tsx — Spec §6.3a / Engineering File Plan §6.0", () => {
-  it("wraps every route except Client View in RequireAuth", () => {
+  it("wraps every route except Client View and Login in RequireAuth", () => {
     const routeBlocks = appSource.split(/<Route\s/).slice(1);
     expect(routeBlocks.length).toBeGreaterThanOrEqual(5);
 
     for (const block of routeBlocks) {
-      const isClientView = block.includes("ROUTE_PATHS.clientView");
+      const isPublicRoute = block.includes("ROUTE_PATHS.clientView") || block.includes("ROUTE_PATHS.login");
       const wrapsInRequireAuth = block.includes("<RequireAuth>");
-      if (isClientView) {
+      if (isPublicRoute) {
         expect(wrapsInRequireAuth).toBe(false);
       } else {
         expect(wrapsInRequireAuth).toBe(true);

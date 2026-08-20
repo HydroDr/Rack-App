@@ -193,8 +193,9 @@ export function RoiTab({ templates, palletProfiles }: RoiTabProps) {
       </label>
 
       {derived !== null && (
-        <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
-          Derived from layout: {derived.positionCount} positions, {Math.round(derived.footprintAreaSqFt)} sq ft footprint.
+        <p style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
+          Derived from layout: <span className="tabular-nums">{derived.positionCount}</span> positions,{" "}
+          <span className="tabular-nums">{Math.round(derived.footprintAreaSqFt)}</span> sq ft footprint.
         </p>
       )}
 
@@ -231,13 +232,15 @@ export function RoiTab({ templates, palletProfiles }: RoiTabProps) {
         </fieldset>
       )}
 
-      <div style={{ marginTop: 16, padding: 12, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 6 }}>
+      <div style={{ marginTop: 16, padding: 12, background: "var(--color-bg-card)", border: "1px solid var(--color-border)", borderRadius: 6 }}>
         <strong>Payback Period: </strong>
-        {payback === undefined
-          ? "Select a Zone to compute."
-          : payback.kind === "noPayback"
-            ? "No payback"
-            : `${payback.years.toFixed(2)} years`}
+        <span className="tabular-nums">
+          {payback === undefined
+            ? "Select a Zone to compute."
+            : payback.kind === "noPayback"
+              ? "No payback"
+              : `${payback.years.toFixed(2)} years`}
+        </span>
       </div>
     </div>
   );

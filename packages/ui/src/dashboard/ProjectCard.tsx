@@ -26,19 +26,19 @@ export function ProjectCard({ project, layoutCount }: ProjectCardProps) {
         overflow: "hidden",
         textDecoration: "none",
         color: "inherit",
-        background: "var(--color-surface)",
+        background: "var(--color-bg-card)",
       }}
     >
-      <div style={{ aspectRatio: "4 / 3", background: "#e9ebee", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ aspectRatio: "4 / 3", background: "var(--color-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {project.thumbnailDataUrl !== undefined ? (
           <img src={project.thumbnailDataUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <span style={{ color: "var(--color-text-muted)", fontSize: 12 }}>No preview yet</span>
+          <span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>No preview yet</span>
         )}
       </div>
       <div style={{ padding: "10px 12px" }}>
-        <div style={{ fontWeight: 600 }}>{project.name}</div>
-        <div style={{ fontSize: 12, color: "var(--color-text-muted)", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+        <div style={{ fontWeight: 500 }}>{project.name}</div>
+        <div style={{ fontSize: 12, color: "var(--color-text-secondary)", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
           <span>{formatDate(project.updatedAt)}</span>
           <span>
             {layoutCount} {layoutCount === 1 ? "layout" : "layouts"}

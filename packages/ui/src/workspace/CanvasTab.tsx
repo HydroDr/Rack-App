@@ -55,6 +55,7 @@ import {
 } from "@rack-app/state";
 import { useAppStores, useHistoryStore, useLayoutStore, useUiPreferencesStore } from "../app/stores.js";
 import { computeInstanceBounds } from "../app/instanceGeometry.js";
+import { resolveCssColor } from "../app/cssColor.js";
 import { computeInstanceBom } from "./bomUtils.js";
 import { collectInstanceWarnings, type InstanceWarning } from "./warningsEngine.js";
 import { Toolbar, type SnapSettings, type ToolId } from "../canvas-ui/Toolbar.js";
@@ -127,7 +128,9 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     let disposed = false;
     let initialized = false;
     const app = new Application();
-    const initOptions = containerRef.current === null ? { background: "#f4f5f7" } : { background: "#f4f5f7", resizeTo: containerRef.current };
+    const canvasBackground = resolveCssColor("--color-bg-hover", "#f4f5f7");
+    const initOptions =
+      containerRef.current === null ? { background: canvasBackground } : { background: canvasBackground, resizeTo: containerRef.current };
     void app.init(initOptions).then(() => {
       initialized = true;
       // init() is async, so React StrictMode's mount->cleanup->remount cycle can call the
@@ -235,7 +238,13 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
     const app = appRef.current;
     if (app === null) return;
     const scene = renderScene({
-      grid: { widthIn: fromInches(6000), heightIn: fromInches(3000), intervalIn: fromInches(120), color: gridColor },
+      grid: {
+        widthIn: fromInches(6000),
+        heightIn: fromInches(3000),
+        intervalIn: fromInches(120),
+        color: gridColor,
+        labelColor: resolveCssColor("--color-text-secondary", "#6b7280"),
+      },
       warehouseElements: Array.from(warehouseElements.values()),
       rackInstances: renderInputs,
       pathLanes: Array.from(pathLanes.values()),
@@ -522,7 +531,9 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           Export PDF
         </button>
         {pdfExportError !== null && <span style={{ color: "var(--color-danger)" }}>{pdfExportError}</span>}
-        <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{Math.round(viewTransform.zoom * 100)}%</span>
+        <span className="tabular-nums" style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+          {Math.round(viewTransform.zoom * 100)}%
+        </span>
         <button type="button" onClick={() => setViewTransform({ zoom: 1, panX: 0, panY: 0 })}>
           Reset View
         </button>
@@ -536,7 +547,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
               borderRadius: "var(--radius)",
               padding: "4px 10px",
               color: "var(--color-warning)",
-              fontWeight: 600,
+              fontWeight: 500,
             }}
           >
             ⚠ {visibleWarnings.length} warning{visibleWarnings.length === 1 ? "" : "s"}
@@ -561,7 +572,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
                   type="button"
                   aria-label="Dismiss warning"
                   onClick={() => setDismissedWarningKeys((current) => new Set(current).add(warningKey(warning)))}
-                  style={{ background: "none", border: "none", color: "var(--color-warning)", fontWeight: 700, flexShrink: 0, padding: "0 4px" }}
+                  style={{ background: "none", border: "none", color: "var(--color-warning)", fontWeight: 500, flexShrink: 0, padding: "0 4px" }}
                 >
                   ×
                 </button>
@@ -602,7 +613,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
             flex: 1,
             position: "relative",
             overflow: "hidden",
-            background: "#f4f5f7",
+            background: "var(--color-bg-hover)",
             cursor: isPanning ? "grabbing" : isSpacePressed ? "grab" : undefined,
           }}
         >
@@ -617,8 +628,8 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
                   style={{
                     position: "absolute",
                     pointerEvents: "none",
-                    border: "1px dashed #2684ff",
-                    background: "rgba(38, 132, 255, 0.1)",
+                    border: "1px dashed var(--color-accent)",
+                    background: "var(--color-accent-subtle)",
                     left: Math.min(startPx.x, currentPx.x),
                     top: Math.min(startPx.y, currentPx.y),
                     width: Math.abs(currentPx.x - startPx.x),
@@ -678,7 +689,7 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
           }}
         />
       </div>
-      <div style={{ padding: "4px 12px", fontSize: 12, color: "var(--color-text-muted)", borderTop: "1px solid var(--color-border)" }}>
+      <div style={{ padding: "4px 12px", fontSize: 12, color: "var(--color-text-secondary)", borderTop: "1px solid var(--color-border)" }}>
         {`Tool: ${activeToolId ?? "none"} — Selected: ${selectedIds.size}`}
       </div>
     </div>

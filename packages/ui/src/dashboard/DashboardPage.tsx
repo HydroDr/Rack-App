@@ -68,8 +68,8 @@ export function DashboardPage() {
   const viewModeButtonStyle = (isActive: boolean): CSSProperties => ({
     padding: "6px 14px",
     border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
-    background: isActive ? "var(--color-accent-bg)" : "var(--color-surface)",
-    color: isActive ? "var(--color-accent)" : "var(--color-text)",
+    background: isActive ? "var(--color-accent-subtle)" : "var(--color-bg-card)",
+    color: isActive ? "var(--color-accent)" : "var(--color-text-primary)",
     fontWeight: isActive ? 600 : 400,
   });
 
@@ -98,9 +98,9 @@ export function DashboardPage() {
             padding: "8px 16px",
             borderRadius: "var(--radius)",
             background: "var(--color-accent)",
-            color: "white",
+            color: "var(--color-text-on-accent)",
             border: "none",
-            fontWeight: 600,
+            fontWeight: 500,
           }}
         >
           + New Project
@@ -150,7 +150,7 @@ export function DashboardPage() {
             : { marginTop: "var(--space-lg)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }
         }
       >
-        {visibleProjects.length === 0 && <p style={{ color: "var(--color-text-muted)" }}>No projects yet — create one to get started.</p>}
+        {visibleProjects.length === 0 && <p style={{ color: "var(--color-text-secondary)" }}>No projects yet — create one to get started.</p>}
         {visibleProjects.map((project) => (
           <ProjectCard key={project.id} project={project} layoutCount={layoutCountFor(project.id)} />
         ))}

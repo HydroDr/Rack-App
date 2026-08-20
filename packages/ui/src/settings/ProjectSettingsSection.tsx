@@ -74,7 +74,7 @@ export function ProjectSettingsSection({ projectId }: ProjectSettingsSectionProp
   }
 
   if (project === undefined) {
-    return <p style={{ color: "var(--color-text-muted)" }}>Select a project to see its settings.</p>;
+    return <p style={{ color: "var(--color-text-secondary)" }}>Select a project to see its settings.</p>;
   }
 
   const activeIds = new Set(project.activePalletProfileIds ?? []);
@@ -123,7 +123,7 @@ export function ProjectSettingsSection({ projectId }: ProjectSettingsSectionProp
 
       <fieldset>
         <legend>Pallet profile filter (multi-select)</legend>
-        {palletProfiles.length === 0 && <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>No pallet profiles yet.</p>}
+        {palletProfiles.length === 0 && <p style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>No pallet profiles yet.</p>}
         {palletProfiles.map((profile) => (
           <label key={profile.id} style={{ display: "block" }}>
             <input type="checkbox" checked={activeIds.has(profile.id)} onChange={() => toggleProfile(profile.id)} /> {profile.name}
@@ -134,7 +134,7 @@ export function ProjectSettingsSection({ projectId }: ProjectSettingsSectionProp
       <fieldset style={{ marginTop: 16 }}>
         <legend>Import DXF drawing styles (preview)</legend>
         <input type="file" accept=".dxf" onChange={(event) => void handleDxfFileChange(event)} />
-        {dxfError !== null && <p style={{ color: "crimson" }}>{dxfError}</p>}
+        {dxfError !== null && <p style={{ color: "var(--color-danger)" }}>{dxfError}</p>}
         {dxfPreferences !== null && (
           <ul style={{ fontSize: 13 }}>
             <li>Layers: {dxfPreferences.layers.map((layer) => layer.name).join(", ") || "none"}</li>

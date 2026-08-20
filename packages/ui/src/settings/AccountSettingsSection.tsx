@@ -23,12 +23,14 @@
 import { useState } from "react";
 import { TOPPLING_RATIO_THRESHOLD } from "@rack-app/rules-engine";
 import { importDxfStylePreferences, type ImportedDrawingPreferences } from "@rack-app/import";
-import type { ToolbarPosition, UnitsPreference } from "@rack-app/state";
+import type { ThemePreference, ToolbarPosition, UnitsPreference } from "@rack-app/state";
 import { useUiPreferencesStore } from "../app/stores.js";
 import { readFileAsText } from "../app/readFileAsText.js";
 import { aciToHex } from "./aciColor.js";
 
 export function AccountSettingsSection() {
+  const theme = useUiPreferencesStore((state) => state.theme);
+  const setTheme = useUiPreferencesStore((state) => state.setTheme);
   const units = useUiPreferencesStore((state) => state.units);
   const setUnits = useUiPreferencesStore((state) => state.setUnits);
   const toolbarPosition = useUiPreferencesStore((state) => state.toolbarPosition);
@@ -93,15 +95,26 @@ export function AccountSettingsSection() {
     <section style={{ maxWidth: 480 }}>
       <h2>Account Settings</h2>
 
+      <fieldset style={{ marginBottom: 16 }}>
+        <legend>Appearance</legend>
+        <label style={{ display: "block" }}>
+          Theme:{" "}
+          <select value={theme} onChange={(event) => setTheme(event.target.value as ThemePreference)}>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+      </fieldset>
+
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>Toppling ratio threshold</div>
+        <div style={{ fontWeight: 500, marginBottom: 4 }}>Toppling ratio threshold</div>
         <div
           role="status"
           aria-readonly="true"
-          style={{ padding: "8px 12px", background: "#f4f5f7", borderRadius: 6, border: "1px solid var(--color-border)" }}
+          style={{ padding: "8px 12px", background: "var(--color-bg-hover)", borderRadius: 6, border: "1px solid var(--color-border)" }}
         >
           <strong>{TOPPLING_RATIO_THRESHOLD}:1</strong>
-          <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginTop: 4 }}>
             ANSI MH16.1 §12.1.3 code minimum — informational, not editable here. The only override path is the
             documented anchored/braced exception recorded on a specific Rack Instance (Spec §2.5).
           </div>
@@ -174,7 +187,7 @@ export function AccountSettingsSection() {
       <fieldset style={{ marginTop: 16 }}>
         <legend>Import drawing settings from DXF</legend>
         <input type="file" accept=".dxf" onChange={(event) => void handleDxfFileChange(event)} />
-        {dxfError !== null && <p style={{ color: "crimson" }}>{dxfError}</p>}
+        {dxfError !== null && <p style={{ color: "var(--color-danger)" }}>{dxfError}</p>}
         {dxfPreferences !== null && (
           <div style={{ fontSize: 13 }}>
             <p>

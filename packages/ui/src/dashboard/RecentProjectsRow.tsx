@@ -41,7 +41,7 @@ export function RecentProjectsRow({ projects, layouts }: RecentProjectsRowProps)
                 padding: "8px 14px",
                 border: "1px solid var(--color-border)",
                 borderRadius: 6,
-                background: "var(--color-surface)",
+                background: "var(--color-bg-card)",
                 textDecoration: "none",
                 color: "inherit",
               }}

@@ -1,19 +1,57 @@
+/**
+ * Design tokens (Design_System.docx §3, §4, §6.1, §6.2).
+ *
+ * :root holds the light-mode values (the base). [data-theme="dark"] on
+ * <html> overrides the same custom properties with dark-mode values —
+ * dark is the default in practice because App.tsx sets data-theme="dark"
+ * on mount unless uiPreferencesStore.theme says otherwise. Every
+ * component must reference these variables; never a hardcoded hex value.
+ */
+
 :root {
   color-scheme: light;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --color-bg: #f4f5f7;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f8f9fb;
-  --color-border: #d7dbe0;
-  --color-text: #1f2430;
-  --color-text-muted: #6b7280;
-  --color-accent: #2684ff;
-  --color-accent-bg: #e8f1ff;
-  --color-warning: #b45309;
-  --color-warning-bg: #fef3c7;
+
+  /* 3.1 Brand & Accent */
+  --color-accent: #f97316;
+  --color-accent-hover: #ea580c;
+  --color-accent-subtle: #f9731615;
+  --color-accent-text: #c2410c;
+  /* Not one of §3's named tokens, but implied by it everywhere a solid --color-accent fill needs a readable label (buttons, active pills). */
+  --color-text-on-accent: #ffffff;
+
+  /* 3.2 Backgrounds & Surfaces */
+  --color-bg-primary: #f5f5f5;
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #fafafa;
+  --color-bg-hover: #f0f0f0;
+  --color-bg-elevated: #ffffff;
+
+  /* 3.3 Text */
+  --color-text-primary: #111111;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+
+  /* 3.4 Borders */
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  /* 3.5 Semantic / Status — identical in both modes */
+  --color-warning: #fbbf24;
+  --color-warning-bg: #fbbf2415;
   --color-warning-border: #f59e0b;
-  --color-danger: #b91c1c;
-  --color-danger-bg: #fee2e2;
+  --color-danger: #ef4444;
+  --color-danger-bg: #ef444415;
+  --color-danger-border: #dc2626;
+  --color-success: #22c55e;
+  --color-success-bg: #22c55e15;
+
+  /* Login screen (§5.5, §6.4) — always this cinematic dark look, independent of the app's light/dark theme choice. */
+  --color-bg-login: #0d0d0d;
+  --color-bg-login-input: #1c1c1c;
+  --color-border-login: #2e2e2e;
+  --color-text-login: #f5f5f5;
+
+  /* Layout (not part of the Design System doc's color tables) */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 12px;
@@ -22,14 +60,55 @@
   --radius: 6px;
 }
 
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-accent: #f97316;
+  --color-accent-hover: #ea580c;
+  --color-accent-subtle: #f9731620;
+  --color-accent-text: #f97316;
+
+  --color-bg-primary: #111111;
+  --color-bg-card: #1c1c1c;
+  --color-bg-sidebar: #161616;
+  --color-bg-hover: #242424;
+  --color-bg-elevated: #242424;
+
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #6b7280;
+
+  --color-border: #2e2e2e;
+  --color-border-strong: #3f3f3f;
+}
+
 * {
   box-sizing: border-box;
 }
 
+html {
+  /* 4.1 Font Choices, 6.2 Typography Implementation */
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 4.3: minimum touch/click target for any interactive element. */
+button,
+select,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="file"] {
+  min-height: 36px;
 }
 
 button {
@@ -37,6 +116,20 @@ button {
   cursor: pointer;
 }
 
-table {
+/* 4.2/6.2: only 400 and 500 are used anywhere — <strong>/<b>/headings default to the browser's 700. */
+strong,
+b,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500;
+}
+
+/* 6.2: BOM counts, PPO numbers, ROI figures, and any numeric table column always use tabular-nums. */
+table,
+.tabular-nums {
   font-variant-numeric: tabular-nums;
 }

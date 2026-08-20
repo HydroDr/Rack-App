@@ -4,15 +4,25 @@
  * §6.0).
  */
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AppStoresProvider } from "./app/stores.js";
+import { AppStoresProvider, useUiPreferencesStore } from "./app/stores.js";
 import { ROUTE_PATHS } from "./router.js";
 import { DashboardPage } from "./dashboard/DashboardPage.js";
 import { ProjectWorkspace } from "./workspace/ProjectWorkspace.js";
 import { TemplateEditorPage } from "./template-editor/TemplateEditorPage.js";
 import { ClientViewPage } from "./client-view/ClientViewPage.js";
 import { SettingsPage } from "./settings/SettingsPage.js";
+import { LoginPage } from "./login/LoginPage.js";
+
+/** Applies the user's theme preference (Design_System.docx §6.1) to <html data-theme>, which index.css's [data-theme="dark"] block reads. */
+function ThemeEffect() {
+  const theme = useUiPreferencesStore((state) => state.theme);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+  return null;
+}
 
 /**
  * Placeholder auth guard: this is a personal-first, local-only app with
@@ -30,8 +40,10 @@ function RequireAuth({ children }: { children: ReactNode }) {
 export function App() {
   return (
     <AppStoresProvider>
+      <ThemeEffect />
       <BrowserRouter>
         <Routes>
+          <Route path={ROUTE_PATHS.login} element={<LoginPage />} />
           <Route
             path={ROUTE_PATHS.dashboard}
             element={

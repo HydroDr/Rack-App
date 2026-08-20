@@ -8,6 +8,7 @@
  */
 
 export const ROUTE_PATHS = {
+  login: "/login",
   dashboard: "/",
   projectWorkspace: "/projects/:projectId",
   newTemplate: "/templates/new",
@@ -22,6 +23,7 @@ export interface RouteDefinition {
 }
 
 export const ROUTE_DEFINITIONS: readonly RouteDefinition[] = [
+  { path: ROUTE_PATHS.login, requiresAuth: false },
   { path: ROUTE_PATHS.dashboard, requiresAuth: true },
   { path: ROUTE_PATHS.projectWorkspace, requiresAuth: true },
   { path: ROUTE_PATHS.newTemplate, requiresAuth: true },

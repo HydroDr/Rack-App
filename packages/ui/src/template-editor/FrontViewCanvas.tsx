@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Application, Graphics } from "pixi.js";
 import { computeVerticalSizing, toInches, type Length } from "@rack-app/rules-engine";
+import { resolveCssColor } from "../app/cssColor.js";
 
 export interface FrontViewCanvasProps {
   readonly palletHeightIn: Length;
@@ -43,7 +44,8 @@ export function FrontViewCanvas({
     let disposed = false;
     let initialized = false;
     const app = new Application();
-    void app.init({ background: "#ffffff", width: CANVAS_WIDTH, height: CANVAS_HEIGHT }).then(() => {
+    const canvasBackground = resolveCssColor("--color-bg-card", "#ffffff");
+    void app.init({ background: canvasBackground, width: CANVAS_WIDTH, height: CANVAS_HEIGHT }).then(() => {
       initialized = true;
       // init() is async, so React StrictMode's mount->cleanup->remount cycle can call the
       // cleanup below before this resolves — destroying a not-yet-initialized Application
@@ -103,7 +105,7 @@ export function FrontViewCanvas({
           {sizingResult.warnings[0]?.message}
         </p>
       )}
-      {sizingResult.kind === "error" && <p style={{ color: "crimson", fontSize: 12 }}>{sizingResult.message}</p>}
+      {sizingResult.kind === "error" && <p style={{ color: "var(--color-danger)", fontSize: 12 }}>{sizingResult.message}</p>}
     </div>
   );
 }

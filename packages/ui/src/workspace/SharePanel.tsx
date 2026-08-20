@@ -113,7 +113,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
         right: 0,
         bottom: 0,
         width: 420,
-        background: "var(--color-surface)",
+        background: "var(--color-bg-card)",
         borderLeft: "1px solid var(--color-border)",
         padding: "var(--space-lg)",
         overflowY: "auto",
@@ -135,13 +135,13 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
           padding: "var(--space-sm) var(--space-md) var(--space-md)",
           border: "1px solid var(--color-border)",
           borderRadius: "var(--radius)",
-          background: "var(--color-surface-alt)",
+          background: "var(--color-bg-hover)",
         }}
       >
-        <legend style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>
+        <legend style={{ fontSize: 11, fontWeight: 500, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>
           New share link
         </legend>
-        {layouts.length === 0 && <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>No layouts in this project yet.</p>}
+        {layouts.length === 0 && <p style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>No layouts in this project yet.</p>}
         {layouts.map((layout) => (
           <label key={layout.id} style={{ display: "block", marginBottom: "var(--space-xs)" }}>
             <input type="checkbox" checked={selectedLayoutIds.has(layout.id)} onChange={() => toggleLayout(layout.id)} /> {layout.name}
@@ -173,7 +173,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
                   padding: "4px 8px",
                   border: "1px solid var(--color-border)",
                   borderRadius: "var(--radius)",
-                  background: "var(--color-surface)",
+                  background: "var(--color-bg-card)",
                 }}
               />
               <button
@@ -183,7 +183,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
                   flexShrink: 0,
                   border: "1px solid var(--color-accent)",
                   borderRadius: "var(--radius)",
-                  background: "var(--color-accent-bg)",
+                  background: "var(--color-accent-subtle)",
                   color: "var(--color-accent)",
                   padding: "4px 10px",
                 }}
@@ -198,7 +198,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
 
       <div style={{ marginTop: "var(--space-lg)" }}>
         <h3 style={{ fontSize: 14, marginBottom: "var(--space-sm)" }}>Links &amp; feedback</h3>
-        {links.length === 0 && <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>No share links yet.</p>}
+        {links.length === 0 && <p style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>No share links yet.</p>}
         {links.map((link) => {
           const linkFeedback = feedback.filter((item) => item.shareLinkId === link.id);
           const thumbsUp = linkFeedback.filter((item) => item.feedbackType === "thumbsUp");
@@ -210,7 +210,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
           return (
             <div key={link.id} style={{ border: "1px solid var(--color-border)", borderRadius: 6, padding: 10, marginBottom: 10 }}>
               <div style={{ fontSize: 13, wordBreak: "break-all" }}>{shareUrlFor(link)}</div>
-              <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+              <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
                 Layouts: {link.sharedLayoutIds.map((id) => layoutNameFor(id)).join(", ")}
                 {" — "}
                 {link.revoked ? "Revoked" : isExpired ? "Expired" : "Active"}

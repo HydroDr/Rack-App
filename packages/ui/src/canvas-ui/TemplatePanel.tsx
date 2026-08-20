@@ -34,7 +34,7 @@ export function TemplatePanel({ templates, variants, activePalletProfileIds, onS
   }
 
   return (
-    <aside style={{ width: 240, padding: 12, borderRight: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
+    <aside style={{ width: 240, padding: 12, borderRight: "1px solid var(--color-border)", background: "var(--color-bg-card)" }}>
       <div role="group" aria-label="Template panel mode" style={{ marginBottom: 8 }}>
         <button aria-pressed={mode === "quick"} onClick={() => setMode("quick")}>
           Quick
@@ -44,20 +44,20 @@ export function TemplatePanel({ templates, variants, activePalletProfileIds, onS
         </button>
       </div>
 
-      {visibleTemplates.length === 0 && <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>No templates match the active filter.</p>}
+      {visibleTemplates.length === 0 && <p style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>No templates match the active filter.</p>}
 
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {visibleTemplates.map((template) => (
           <li key={template.id} style={{ marginBottom: 10 }}>
             {mode === "normal" && (
-              <div style={{ aspectRatio: "4 / 3", background: "#e9ebee", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ aspectRatio: "4 / 3", background: "var(--color-bg-hover)", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ fontSize: 10, color: "var(--color-text-muted)" }}>Thumbnail</span>
               </div>
             )}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 4 }}>
               <button onClick={() => onSelectTemplate(template.id)} style={{ display: "block", flex: 1, textAlign: "left" }}>
                 <strong>{template.name}</strong>
-                <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+                <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
                   {template.palletLevels} lvl
                   {mode === "normal" && (
                     <>

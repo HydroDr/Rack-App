@@ -191,7 +191,7 @@ export function TemplateEditorPage() {
 
         <ComponentColorPicker colors={componentColors} onChange={(component, color) => setComponentColors({ ...componentColors, [component]: color })} />
 
-        <button onClick={() => void handleSave()} style={{ marginTop: 12, padding: "8px 14px", background: "var(--color-accent)", color: "white", border: "none", borderRadius: 6 }}>
+        <button onClick={() => void handleSave()} style={{ marginTop: 12, padding: "8px 14px", background: "var(--color-accent)", color: "var(--color-text-on-accent)", border: "none", borderRadius: 6 }}>
           {existingTemplate === null ? "Save as Template" : "Save Changes"}
         </button>
       </div>

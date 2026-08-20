@@ -153,7 +153,7 @@ export function ProjectWorkspace() {
           gap: 4,
           padding: "8px 16px",
           borderBottom: "1px solid var(--color-border)",
-          background: "var(--color-surface)",
+          background: "var(--color-bg-card)",
         }}
       >
         <div style={{ display: "flex", gap: 4 }}>
@@ -162,7 +162,7 @@ export function ProjectWorkspace() {
               key={tab.id}
               aria-pressed={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{ fontWeight: activeTab === tab.id ? 700 : 400, background: "none", border: "none", padding: "6px 10px", cursor: "pointer" }}
+              style={{ fontWeight: activeTab === tab.id ? 500 : 400, background: "none", border: "none", padding: "6px 10px", cursor: "pointer" }}
             >
               {tab.label}
             </button>
@@ -191,7 +191,7 @@ export function ProjectWorkspace() {
       </nav>
 
       {layouts.length === 0 ? (
-        <p style={{ padding: 24, color: "var(--color-text-muted)" }}>
+        <p style={{ padding: 24, color: "var(--color-text-secondary)" }}>
           This project has no layouts yet — click "+ New Layout" above to create one before placing racks.
         </p>
       ) : (
