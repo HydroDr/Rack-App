@@ -119,12 +119,12 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
         overflowY: "auto",
         zIndex: 20,
         fontSize: 13,
-        boxShadow: "-4px 0 16px rgba(0, 0, 0, 0.08)",
+        boxShadow: "var(--shadow-md)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 style={{ margin: 0, fontSize: 17 }}>Share</h2>
-        <button type="button" onClick={onClose}>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>
           Close
         </button>
       </div>
@@ -134,7 +134,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
           marginTop: "var(--space-lg)",
           padding: "var(--space-sm) var(--space-md) var(--space-md)",
           border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius)",
+          borderRadius: "var(--radius-lg)",
           background: "var(--color-bg-hover)",
         }}
       >
@@ -154,7 +154,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
 
         {error !== null && <p style={{ color: "var(--color-danger)" }}>{error}</p>}
 
-        <button type="button" onClick={() => void handleCreateLink()} style={{ marginTop: "var(--space-sm)" }}>
+        <button type="button" className="btn btn-primary" onClick={() => void handleCreateLink()} style={{ marginTop: "var(--space-sm)" }}>
           Create Link
         </button>
 
@@ -208,7 +208,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
           const lastViewedAt = link.viewTimestamps[link.viewTimestamps.length - 1];
 
           return (
-            <div key={link.id} style={{ border: "1px solid var(--color-border)", borderRadius: 6, padding: 10, marginBottom: 10 }}>
+            <div key={link.id} className="card" style={{ padding: "var(--space-md)", marginBottom: "var(--space-sm)" }}>
               <div style={{ fontSize: 13, wordBreak: "break-all" }}>{shareUrlFor(link)}</div>
               <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
                 Layouts: {link.sharedLayoutIds.map((id) => layoutNameFor(id)).join(", ")}
@@ -223,7 +223,7 @@ export function SharePanel({ projectId, layouts, onClose }: SharePanelProps) {
               </div>
 
               {!link.revoked && (
-                <button type="button" onClick={() => void handleRevoke(link)} style={{ marginTop: 6 }}>
+                <button type="button" className="btn btn-secondary" onClick={() => void handleRevoke(link)} style={{ marginTop: "var(--space-sm)" }}>
                   Revoke
                 </button>
               )}

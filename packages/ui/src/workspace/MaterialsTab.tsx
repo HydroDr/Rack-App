@@ -92,13 +92,14 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
             ))}
           </select>
         </label>
-        <button type="button" onClick={() => void handleExportCsv()} disabled={lineItems.length === 0}>
+        <button type="button" className="btn btn-secondary" onClick={() => void handleExportCsv()} disabled={lineItems.length === 0}>
           Export CSV
         </button>
         {exportError !== null && <span style={{ color: "var(--color-danger)", fontSize: 13 }}>{exportError}</span>}
       </div>
 
-      <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 480, fontSize: 14 }}>
+      <div className="card" style={{ maxWidth: 480, overflow: "hidden" }}>
+      <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 14 }}>
         <thead>
           <tr>
             <th
@@ -155,6 +156,7 @@ export function MaterialsTab({ templates, palletProfiles }: MaterialsTabProps) {
           </tfoot>
         )}
       </table>
+      </div>
     </div>
   );
 }

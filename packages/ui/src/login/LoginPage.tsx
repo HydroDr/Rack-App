@@ -26,54 +26,18 @@ export function LoginPage() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--color-bg-login)",
+        background:
+          "radial-gradient(ellipse 900px 480px at 50% -8%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 70%), var(--color-bg-login)",
         color: "var(--color-text-login)",
         padding: "var(--space-xl)",
       }}
     >
-      <h1 style={{ fontSize: 24, fontWeight: 500, margin: "0 0 var(--space-xl)" }}>Rack-App</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 500, margin: "0 0 var(--space-xl)", letterSpacing: 0.2 }}>Rack-App</h1>
 
-      <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-        <input
-          type="email"
-          placeholder="Email"
-          required
-          style={{
-            height: 36,
-            padding: "0 var(--space-md)",
-            borderRadius: "var(--radius)",
-            border: "1px solid var(--color-border-login)",
-            background: "var(--color-bg-login-input)",
-            color: "var(--color-text-login)",
-            fontSize: 14,
-          }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          required
-          style={{
-            height: 36,
-            padding: "0 var(--space-md)",
-            borderRadius: "var(--radius)",
-            border: "1px solid var(--color-border-login)",
-            background: "var(--color-bg-login-input)",
-            color: "var(--color-text-login)",
-            fontSize: 14,
-          }}
-        />
-        <button
-          type="submit"
-          style={{
-            height: 36,
-            borderRadius: "var(--radius)",
-            border: "none",
-            background: "var(--color-accent)",
-            color: "var(--color-text-on-accent)",
-            fontSize: 14,
-            fontWeight: 500,
-          }}
-        >
+      <form onSubmit={handleSubmit} className="login-form" style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <input type="email" placeholder="Email" required className="login-input" />
+        <input type="password" placeholder="Password" required className="login-input" />
+        <button type="submit" className="btn btn-primary" style={{ height: 36, marginTop: "var(--space-xs)" }}>
           Sign In
         </button>
       </form>

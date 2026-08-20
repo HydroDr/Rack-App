@@ -70,7 +70,7 @@ export function DashboardPage() {
     border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
     background: isActive ? "var(--color-accent-subtle)" : "var(--color-bg-card)",
     color: isActive ? "var(--color-accent)" : "var(--color-text-primary)",
-    fontWeight: isActive ? 600 : 400,
+    fontWeight: isActive ? 500 : 400,
   });
 
   return (
@@ -92,24 +92,14 @@ export function DashboardPage() {
             fontSize: 14,
           }}
         />
-        <button
-          onClick={() => void handleNewProject()}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "var(--radius)",
-            background: "var(--color-accent)",
-            color: "var(--color-text-on-accent)",
-            border: "none",
-            fontWeight: 500,
-          }}
-        >
+        <button className="btn btn-primary" onClick={() => void handleNewProject()}>
           + New Project
         </button>
       </header>
 
       <RecentProjectsRow projects={projects} layouts={layouts} />
       <div style={{ marginTop: "var(--space-md)", display: "flex", alignItems: "center", gap: "var(--space-lg)", fontSize: 14 }}>
-        <Link to="/templates/new" style={{ color: "var(--color-accent)" }}>
+        <Link to="/templates/new" style={{ color: "var(--color-accent)", fontWeight: 500 }}>
           + New Template
         </Link>
         <PalletProfileForm onCreated={() => {}} />

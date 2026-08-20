@@ -7,6 +7,7 @@
 import { useEffect, type ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppStoresProvider, useUiPreferencesStore } from "./app/stores.js";
+import { AppShell } from "./app/AppShell.js";
 import { ROUTE_PATHS } from "./router.js";
 import { DashboardPage } from "./dashboard/DashboardPage.js";
 import { ProjectWorkspace } from "./workspace/ProjectWorkspace.js";
@@ -48,7 +49,9 @@ export function App() {
             path={ROUTE_PATHS.dashboard}
             element={
               <RequireAuth>
-                <DashboardPage />
+                <AppShell>
+                  <DashboardPage />
+                </AppShell>
               </RequireAuth>
             }
           />
@@ -80,7 +83,9 @@ export function App() {
             path={ROUTE_PATHS.settings}
             element={
               <RequireAuth>
-                <SettingsPage />
+                <AppShell>
+                  <SettingsPage />
+                </AppShell>
               </RequireAuth>
             }
           />

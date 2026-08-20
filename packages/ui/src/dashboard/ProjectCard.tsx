@@ -17,18 +17,7 @@ function formatDate(iso: string): string {
 
 export function ProjectCard({ project, layoutCount }: ProjectCardProps) {
   return (
-    <Link
-      to={`/projects/${project.id}`}
-      style={{
-        display: "block",
-        border: "1px solid var(--color-border)",
-        borderRadius: 8,
-        overflow: "hidden",
-        textDecoration: "none",
-        color: "inherit",
-        background: "var(--color-bg-card)",
-      }}
-    >
+    <Link to={`/projects/${project.id}`} className="card card-link">
       <div style={{ aspectRatio: "4 / 3", background: "var(--color-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {project.thumbnailDataUrl !== undefined ? (
           <img src={project.thumbnailDataUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />

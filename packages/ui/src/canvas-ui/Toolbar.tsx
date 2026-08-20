@@ -11,6 +11,7 @@
  * §6.3).
  */
 
+import type { CSSProperties } from "react";
 import { useUiPreferencesStore } from "../app/stores.js";
 import type { ToolbarPosition } from "@rack-app/state";
 
@@ -58,6 +59,13 @@ export interface ToolbarProps {
   readonly onChangeSnapSettings: (next: SnapSettings) => void;
 }
 
+const dividerStyle: CSSProperties = {
+  alignSelf: "stretch",
+  width: 1,
+  background: "var(--color-border)",
+  margin: "4px 0",
+};
+
 export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnapSettings }: ToolbarProps) {
   const toolbarPosition = useUiPreferencesStore((state) => state.toolbarPosition);
   const setToolbarPosition = useUiPreferencesStore((state) => state.setToolbarPosition);
@@ -76,13 +84,16 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
         flexDirection: isHorizontal ? "row" : "column",
         flexWrap: "wrap",
         gap: "var(--space-md)",
-        padding: "var(--space-sm)",
+        padding: "var(--space-sm) var(--space-md)",
         background: "var(--color-bg-card)",
         borderBottom: toolbarPosition === "top" ? "1px solid var(--color-border)" : undefined,
+        boxShadow: "var(--shadow-sm)",
+        position: "relative",
+        zIndex: 1,
         alignItems: "center",
       }}
     >
-      <label style={{ fontSize: 13 }}>
+      <label style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
         Dock:{" "}
         <select value={toolbarPosition} onChange={(event) => setToolbarPosition(event.target.value as ToolbarPosition)}>
           <option value="top">Top</option>
@@ -92,6 +103,8 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
         </select>
       </label>
 
+      <div aria-hidden="true" style={dividerStyle} />
+
       <div>
         {(Object.keys(CATEGORY_LABELS) as ToolCategory[]).map((category) => (
           <label key={category} style={{ marginRight: 8, fontSize: 13, color: "var(--color-text-secondary)" }}>
@@ -99,6 +112,8 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
           </label>
         ))}
       </div>
+
+      <div aria-hidden="true" style={dividerStyle} />
 
       <div style={{ display: "flex", gap: 2 }}>
         {TOOL_DEFINITIONS.filter((tool) => visibleCategories.has(tool.category)).map((tool) => {
@@ -133,23 +148,33 @@ export function Toolbar({ activeToolId, onSelectTool, snapSettings, onChangeSnap
       </div>
 
       {quickMenuTools.length > 0 && (
-        <div style={{ display: "flex", gap: 4 }}>
-          <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Quick:</span>
-          {quickMenuTools.map((toolId) => {
-            const tool = TOOL_DEFINITIONS.find((definition) => definition.id === toolId);
-            if (tool === undefined) return null;
-            return (
-              <button key={toolId} onClick={() => onSelectTool(tool.id)}>
-                {tool.label}
-              </button>
-            );
-          })}
-        </div>
+        <>
+          <div aria-hidden="true" style={dividerStyle} />
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 500, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.4 }}>Quick</span>
+            {quickMenuTools.map((toolId) => {
+              const tool = TOOL_DEFINITIONS.find((definition) => definition.id === toolId);
+              if (tool === undefined) return null;
+              return (
+                <button key={toolId} className="btn btn-secondary" style={{ fontSize: 12, padding: "0 var(--space-sm)", height: 28 }} onClick={() => onSelectTool(tool.id)}>
+                  {tool.label}
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
 
-      <button disabled={activeToolId === null} onClick={() => activeToolId !== null && addToQuickMenu(activeToolId)} style={{ fontSize: 12 }}>
-        Add to quick menu
+      <button
+        className="btn btn-secondary"
+        disabled={activeToolId === null}
+        onClick={() => activeToolId !== null && addToQuickMenu(activeToolId)}
+        style={{ fontSize: 12, padding: "0 var(--space-sm)", height: 28 }}
+      >
+        + Quick menu
       </button>
+
+      <div aria-hidden="true" style={dividerStyle} />
 
       <div
         style={{

@@ -178,9 +178,10 @@ export function PropertiesPanel({
           />
         </label>
         <button
+          className="btn btn-primary"
           disabled={!hasPendingConfigChange}
           onClick={() => onRecomputeConfiguration({ configurationType: pendingConfigType, rackColumns: pendingColumns })}
-          style={{ marginTop: "var(--space-sm)" }}
+          style={{ marginTop: "var(--space-sm)", height: 32, width: "100%" }}
         >
           Recompute
         </button>

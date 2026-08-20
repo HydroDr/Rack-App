@@ -526,15 +526,20 @@ export function CanvasTab({ templates, variants, palletProfiles }: CanvasTabProp
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Toolbar activeToolId={activeToolId} onSelectTool={handleSelectTool} snapSettings={snapSettings} onChangeSnapSettings={setSnapSettings} />
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px" }}>
-        <button type="button" onClick={() => void handleExportPdf()}>
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", padding: "var(--space-xs) var(--space-sm)" }}>
+        <button type="button" className="btn btn-secondary" style={{ height: 28, padding: "0 var(--space-md)", fontSize: 12 }} onClick={() => void handleExportPdf()}>
           Export PDF
         </button>
         {pdfExportError !== null && <span style={{ color: "var(--color-danger)" }}>{pdfExportError}</span>}
         <span className="tabular-nums" style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
           {Math.round(viewTransform.zoom * 100)}%
         </span>
-        <button type="button" onClick={() => setViewTransform({ zoom: 1, panX: 0, panY: 0 })}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          style={{ height: 28, padding: "0 var(--space-md)", fontSize: 12 }}
+          onClick={() => setViewTransform({ zoom: 1, panX: 0, panY: 0 })}
+        >
           Reset View
         </button>
         {visibleWarnings.length > 0 && (
